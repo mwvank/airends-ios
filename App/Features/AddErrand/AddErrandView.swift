@@ -5,7 +5,7 @@ import ErrandKit
 /// Adds an errand by typing and searching for a place, without the microphone.
 struct AddErrandView: View {
     let nextSortIndex: Int
-    var search: any PlaceSearchService = MapKitPlaceSearch()
+    var search: any PlaceSearchService = preferredPlaceSearch()
 
     @Environment(\.modelContext) private var context
     @Environment(\.dismiss) private var dismiss

@@ -7,7 +7,7 @@ import ErrandKit
 struct VoiceReviewView: View {
     let text: String
     var understanding: any ErrandUnderstandingService = OnDeviceErrandUnderstanding()
-    var search: any PlaceSearchService = MapKitPlaceSearch()
+    var search: any PlaceSearchService = preferredPlaceSearch()
     var onAdded: () -> Void = {}
 
     @Environment(\.modelContext) private var context

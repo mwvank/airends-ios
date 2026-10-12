@@ -5,7 +5,7 @@ import ErrandKit
 /// Lets the user search for a place or pick one of their saved places.
 struct PlacePickerView: View {
     var initialQuery: String = ""
-    var search: any PlaceSearchService = MapKitPlaceSearch()
+    var search: any PlaceSearchService = preferredPlaceSearch()
     var onPick: (PlaceRef) -> Void
 
     @Environment(\.dismiss) private var dismiss
