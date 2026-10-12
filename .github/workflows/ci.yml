@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Test core logic
+        working-directory: Packages/ErrandKit
+        run: swift test
+
+      - name: Generate Xcode project
+        run: brew install xcodegen && xcodegen
+
+      - name: Build app
+        run: |
+          xcodebuild build \
+            -project ErrandPlanner.xcodeproj \
+            -scheme ErrandPlanner \
+            -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO

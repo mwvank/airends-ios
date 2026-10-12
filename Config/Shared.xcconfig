@@ -1,0 +1,11 @@
+// App identity in one place, so renaming the app is a one-line change.
+// "Airends" is a working title; the code and module use the neutral name ErrandPlanner.
+APP_DISPLAY_NAME = Airends
+
+// Replace with your own reverse-domain ID before the first TestFlight build.
+// It cannot change after the app is on the App Store.
+APP_BUNDLE_ID = com.example.errandplanner
+
+// Set to your Apple Developer Team ID to sign on a real device.
+DEVELOPMENT_TEAM =
+CODE_SIGN_STYLE = Automatic

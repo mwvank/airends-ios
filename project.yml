@@ -1,0 +1,43 @@
+# XcodeGen spec. Run `xcodegen` to generate ErrandPlanner.xcodeproj.
+# The .xcodeproj is generated, not committed, so the project file never has merge conflicts.
+name: ErrandPlanner
+options:
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+configFiles:
+  Debug: Config/Shared.xcconfig
+  Release: Config/Shared.xcconfig
+packages:
+  ErrandKit:
+    path: Packages/ErrandKit
+targets:
+  ErrandPlanner:
+    type: application
+    platform: iOS
+    sources: [App]
+    dependencies:
+      - package: ErrandKit
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(APP_BUNDLE_ID)
+        PRODUCT_NAME: ErrandPlanner
+        MARKETING_VERSION: "0.1.0"
+        CURRENT_PROJECT_VERSION: "1"
+        SWIFT_VERSION: "6.0"
+        TARGETED_DEVICE_FAMILY: "1"
+        GENERATE_INFOPLIST_FILE: YES
+        INFOPLIST_KEY_CFBundleDisplayName: $(APP_DISPLAY_NAME)
+        INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
+        INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationPortrait
+        INFOPLIST_KEY_NSLocationWhenInUseUsageDescription: "Your location is used to plan routes from where you are and find nearby places."
+schemes:
+  ErrandPlanner:
+    build:
+      targets:
+        ErrandPlanner: all
+    run:
+      config: Debug
+    archive:
+      config: Release
