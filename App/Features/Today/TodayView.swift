@@ -19,7 +19,14 @@ struct TodayView: View {
     @Bindable private var pending = PendingPlanRequest.shared
     @AppStorage(NavigationPreference.storageKey) private var savedNavigationApp: String = ""
 
-    private let scheduler = PlanScheduler(travel: EstimatedTravelTimes())
+    /// Live data from Google through the backend. Until it arrives, or if the
+    /// backend isn't set up, plans use estimated times and no opening hours.
+    @State private var googleTimes: GoogleTravelTimes?
+    @State private var openingHours: [String: [TimeRange]] = [:]
+
+    private var scheduler: PlanScheduler {
+        PlanScheduler(travel: googleTimes ?? EstimatedTravelTimes())
+    }
 
     private var todaysErrands: [Errand] {
         let today = Calendar.current.startOfDay(for: .now)
@@ -35,7 +42,24 @@ struct TodayView: View {
 
     private var plan: DayPlan? {
         guard let origin else { return nil }
-        return scheduler.timeline(from: origin, startingAt: .now, stops: todaysErrands.map(\.planStop))
+        return scheduler.timeline(from: origin, startingAt: .now, stops: planStops)
+    }
+
+    private var planStops: [PlanStop] {
+        todaysErrands.map { errand in
+            var stop = errand.planStop
+            if let id = errand.googlePlaceID, let ranges = openingHours[id] {
+                // The opening period still ahead today, or the last one.
+                stop.openHours = ranges.first { $0.end > .now } ?? ranges.last
+            }
+            return stop
+        }
+    }
+
+    /// Changes when the set of places changes (not when stops are only reordered).
+    private var liveDataKey: String {
+        let places = ([origin].compactMap { $0 } + todaysErrands.map(\.place)).map(GoogleTravelTimes.key)
+        return Set(places).sorted().joined(separator: "|")
     }
 
     var body: some View {
@@ -74,6 +98,7 @@ struct TodayView: View {
                 Text("This removes every errand. Your saved places are kept.")
             }
             .safeAreaInset(edge: .bottom) { bottomBar }
+            .task(id: liveDataKey) { await loadLiveData() }
             .sheet(isPresented: $showingAdd) { AddErrandView(nextSortIndex: (allErrands.map(\.sortIndex).max() ?? -1) + 1) }
             .sheet(isPresented: $showingSettings) { SettingsView() }
             .sheet(isPresented: $showingDictation) { DictationView(onAdded: optimiseNewErrands) }
@@ -117,6 +142,8 @@ struct TodayView: View {
                 if let finish = plan?.finish {
                     Text("Done by \(finish.formatted(date: .omitted, time: .shortened))")
                 }
+            } footer: {
+                Text(googleTimes == nil ? "Drive times are estimates." : "Drive times include live traffic from Google.")
             }
             if !entitlements.isUnlocked(.adFree) {
                 Section { AdSlotView() }
@@ -165,9 +192,28 @@ struct TodayView: View {
 
     private func optimise() {
         guard let origin else { return }
-        let best = scheduler.optimised(from: origin, startingAt: .now, stops: todaysErrands.map(\.planStop))
+        let best = scheduler.optimised(from: origin, startingAt: .now, stops: planStops)
         let byID = Dictionary(uniqueKeysWithValues: todaysErrands.map { ($0.id, $0) })
         for (index, scheduled) in best.stops.enumerated() { byID[scheduled.id]?.sortIndex = index }
+    }
+
+    /// Fetches traffic-aware drive times and today's opening hours from Google.
+    /// Failures keep the estimates, so the plan always works offline.
+    private func loadLiveData() async {
+        guard let backend = BackendClient.shared, let origin, !todaysErrands.isEmpty else { return }
+        try? await Task.sleep(for: .milliseconds(500)) // let quick successive edits settle
+
+        var seen = Set<String>()
+        let points = ([origin] + todaysErrands.map(\.place)).filter { seen.insert(GoogleTravelTimes.key($0)).inserted }
+        if points.count >= 2, points.count <= BackendClient.maxMatrixPoints,
+           let seconds = try? await backend.travelTimes(between: points, departure: .now) {
+            googleTimes = GoogleTravelTimes(points: points, seconds: seconds)
+        }
+
+        let placeIDs = Array(Set(todaysErrands.compactMap(\.googlePlaceID))).sorted()
+        if !placeIDs.isEmpty, let hours = try? await backend.openingHours(placeIDs: placeIDs, on: .now) {
+            openingHours.merge(hours) { _, new in new }
+        }
     }
 
     private func startRoute() {

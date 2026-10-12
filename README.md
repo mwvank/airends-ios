@@ -29,6 +29,7 @@ cd Packages/ErrandKit && swift test
 | `App/` | The SwiftUI app: screens, SwiftData models and services. |
 | `Packages/ErrandKit/` | Platform-independent logic with tests: plan timing and stop ordering, entitlements (free vs Pro), and Google Maps / Apple Maps links. |
 | `Config/Shared.xcconfig` | App display name and bundle ID, so renaming is a one-line change. |
+| `backend/` | Firebase Cloud Function that calls Google Maps Platform for the app. Holds the only copy of the API key. |
 | `project.yml` | XcodeGen spec. The `.xcodeproj` is generated and not committed. |
 | `.github/workflows/ci.yml` | Runs the tests and builds the app on every push and pull request. |
 
@@ -55,14 +56,40 @@ cd Packages/ErrandKit && swift test
 
 Siri note: Apple only allows fixed phrases (plus the app name) to launch a shortcut directly, so "Hey Siri, add pick up dry cleaning to Airends" in one breath isn't possible. Siri asks a quick follow-up question instead.
 
+## Google proof of concept (milestone 3)
+
+When `BACKEND_HOST` is set in `Config/Shared.xcconfig`, the app uses Google through the backend:
+
+- **Place search** comes from Google Places, so every stop carries a Google place ID.
+- **Drive times** are traffic-aware, from the Google Routes API, fetched once for all of today's places (up to 9 stops plus your location). The list footer says whether times are live or estimated.
+- **Opening hours** come from Google Places for today, so the plan waits for a store to open and warns if it closes first.
+
+With `BACKEND_HOST` empty, or if the backend can't be reached, the app falls back to MapKit search and estimated times.
+
+### Deploying the backend (from a Mac)
+
+One-time setup:
+
+1. Install Node 22 from nodejs.org, then `npm install -g firebase-tools` and `firebase login`.
+2. In Google Cloud (same project as Firebase), create an API key restricted to **Routes API** and **Places API (New)**.
+3. From `backend/`: `firebase use --add` and pick the Firebase project.
+4. `firebase functions:secrets:set MAPS_API_KEY` and paste the key when asked. It is stored in Google Secret Manager, never in the repo or the app.
+
+Each deploy:
+
+```sh
+cd backend
+firebase deploy --only functions
+```
+
+The deploy prints the function URL. Put it in `Config/Shared.xcconfig` without `https://`, for example `BACKEND_HOST = us-central1-airends.cloudfunctions.net/api`, then rebuild the app.
+
+Backend tests: `cd backend/functions && npm install && npm test`.
+
 ### Temporary stand-ins
 
-These are deliberately simple until the backend exists, and are swapped out in later milestones:
-
 - **Speech** uses Apple's established speech recogniser (on device where supported). It can move to the newer SpeechAnalyzer API later.
-- **Place search** uses Apple's MapKit search. It will move to Google Places through the backend.
-- **Travel times** are estimated from straight-line distance. They will come from the Google Routes API with live traffic.
-- **Opening hours** aren't fetched yet. They will come from Google Places.
+- **App Check** isn't enforced yet, so anyone with the URL could call the backend (rate limited to 60 requests a minute per address). Turn on `ENFORCE_APP_CHECK` once the app ships with App Attest.
 - **Ads and Pro** are placeholders. AdMob and StoreKit 2 come in milestone 6.
 
 ## Security

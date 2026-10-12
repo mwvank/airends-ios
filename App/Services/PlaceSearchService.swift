@@ -7,9 +7,24 @@ protocol PlaceSearchService: Sendable {
     func search(_ query: String, near center: CLLocationCoordinate2D?) async throws -> [PlaceRef]
 }
 
-/// Development stand-in using MapKit search so the app works before the backend exists.
-/// Milestone 3 replaces this with Google Places Autocomplete through the backend,
-/// which returns the Google place IDs used for hours, routing and the Google Maps handoff.
+/// The search the app uses: Google through the backend when it is set up, otherwise MapKit.
+func preferredPlaceSearch() -> any PlaceSearchService {
+    if let backend = BackendClient.shared { GooglePlaceSearch(backend: backend) } else { MapKitPlaceSearch() }
+}
+
+/// Google Places search through the backend. Results carry Google place IDs,
+/// which the app uses for opening hours and the Google Maps handoff.
+struct GooglePlaceSearch: PlaceSearchService {
+    let backend: BackendClient
+
+    func search(_ query: String, near center: CLLocationCoordinate2D?) async throws -> [PlaceRef] {
+        let trimmed = query.trimmingCharacters(in: .whitespaces)
+        guard !trimmed.isEmpty else { return [] }
+        return try await backend.searchPlaces(trimmed, near: center.map { ($0.latitude, $0.longitude) })
+    }
+}
+
+/// Fallback using MapKit search, for when the backend isn't configured.
 struct MapKitPlaceSearch: PlaceSearchService {
     func search(_ query: String, near center: CLLocationCoordinate2D?) async throws -> [PlaceRef] {
         let trimmed = query.trimmingCharacters(in: .whitespaces)
