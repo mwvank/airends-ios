@@ -9,6 +9,10 @@ struct SettingsView: View {
     var body: some View {
         NavigationStack {
             Form {
+                Section("Places") {
+                    NavigationLink("My places") { MyPlacesView() }
+                }
+
                 Section("Navigation") {
                     Picker("Navigate with", selection: $savedNavigationApp) {
                         Text("Ask every time").tag("")
