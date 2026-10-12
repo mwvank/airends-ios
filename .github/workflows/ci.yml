@@ -13,15 +13,24 @@ jobs:
 
       - name: Test core logic
         working-directory: Packages/ErrandKit
-        run: swift test
+        run: |
+          set -o pipefail
+          swift test 2>&1 | tee "$RUNNER_TEMP/swift-test.log"
 
       - name: Generate Xcode project
         run: brew install xcodegen && xcodegen
 
       - name: Build app
         run: |
+          set -o pipefail
           xcodebuild build \
             -project ErrandPlanner.xcodeproj \
             -scheme ErrandPlanner \
             -destination 'generic/platform=iOS Simulator' \
-            CODE_SIGNING_ALLOWED=NO
+            CODE_SIGNING_ALLOWED=NO 2>&1 | tee "$RUNNER_TEMP/xcodebuild.log"
+
+      - name: Report errors
+        if: failure()
+        run: |
+          .github/scripts/annotate-errors.sh "$RUNNER_TEMP/swift-test.log"
+          .github/scripts/annotate-errors.sh "$RUNNER_TEMP/xcodebuild.log"

@@ -45,10 +45,21 @@ cd Packages/ErrandKit && swift test
 - **Start route** asks Google Maps (recommended) or Apple Maps, with "Don't ask again"; changeable in Settings.
 - Entitlements layer for free vs Pro, ready for remote config, with an ad placeholder for free users.
 
+## Milestone 2: Siri and voice
+
+- **Plan my day by voice:** tap **Plan my day**, say your errands, and review them as editable cards before they're added and the route is optimised.
+- **Siri:** "Hey Siri, plan my day in Airends" or "Hey Siri, add an errand in Airends". Siri asks what you need to do, then the app opens with the errands ready to review. These phrases also appear in Shortcuts, Spotlight and the Action Button settings.
+- **Understanding:** Apple's on-device language model (Foundation Models) turns speech into errands. iPhones without Apple Intelligence use a built-in rule-based parser instead (`HeuristicErrandParser`).
+- **Your places:** "the store" or "CVS" is matched to places you already use. Once "the store" is resolved, it's remembered as a nickname. Nicknames can be edited in **Settings → My places**.
+- **Typing still works:** everything is also available without the microphone via **+**.
+
+Siri note: Apple only allows fixed phrases (plus the app name) to launch a shortcut directly, so "Hey Siri, add pick up dry cleaning to Airends" in one breath isn't possible. Siri asks a quick follow-up question instead.
+
 ### Temporary stand-ins
 
 These are deliberately simple until the backend exists, and are swapped out in later milestones:
 
+- **Speech** uses Apple's established speech recogniser (on device where supported). It can move to the newer SpeechAnalyzer API later.
 - **Place search** uses Apple's MapKit search. It will move to Google Places through the backend.
 - **Travel times** are estimated from straight-line distance. They will come from the Google Routes API with live traffic.
 - **Opening hours** aren't fetched yet. They will come from Google Places.

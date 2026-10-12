@@ -14,6 +14,9 @@ struct TodayView: View {
     @State private var showingAdd = false
     @State private var showingSettings = false
     @State private var showingNavigationChoice = false
+    @State private var showingDictation = false
+    @State private var confirmingClear = false
+    @Bindable private var pending = PendingPlanRequest.shared
     @AppStorage(NavigationPreference.storageKey) private var savedNavigationApp: String = ""
 
     private let scheduler = PlanScheduler(travel: EstimatedTravelTimes())
@@ -42,7 +45,7 @@ struct TodayView: View {
                     ContentUnavailableView(
                         "Nothing planned yet",
                         systemImage: "checklist",
-                        description: Text("Add your errands for today and Airends will plan the best route.")
+                        description: Text("Tap Plan my day and say what you need to do, or add errands by typing.")
                     )
                 } else {
                     planList
@@ -56,10 +59,28 @@ struct TodayView: View {
                 ToolbarItem(placement: .topBarTrailing) {
                     Button("Add", systemImage: "plus") { showingAdd = true }
                 }
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu("More", systemImage: "ellipsis.circle") {
+                        Button("Clear all errands", systemImage: "trash", role: .destructive) {
+                            confirmingClear = true
+                        }
+                        .disabled(allErrands.isEmpty)
+                    }
+                }
+            }
+            .confirmationDialog("Clear all errands?", isPresented: $confirmingClear, titleVisibility: .visible) {
+                Button("Clear all errands", role: .destructive, action: clearAll)
+            } message: {
+                Text("This removes every errand. Your saved places are kept.")
             }
             .safeAreaInset(edge: .bottom) { bottomBar }
             .sheet(isPresented: $showingAdd) { AddErrandView(nextSortIndex: (allErrands.map(\.sortIndex).max() ?? -1) + 1) }
             .sheet(isPresented: $showingSettings) { SettingsView() }
+            .sheet(isPresented: $showingDictation) { DictationView(onAdded: optimiseNewErrands) }
+            .sheet(item: $pending.request) { request in
+                // Errands dictated through Siri.
+                NavigationStack { VoiceReviewView(text: request.text, onAdded: optimiseNewErrands) }
+            }
             .sheet(isPresented: $showingNavigationChoice) {
                 NavigationChoiceView { app in openRoute(in: app) }
                     .presentationDetents([.medium])
@@ -105,13 +126,18 @@ struct TodayView: View {
 
     private var bottomBar: some View {
         HStack {
-            Button("Optimise", systemImage: "wand.and.stars", action: optimise)
+            Button("Plan my day", systemImage: "mic.fill") { showingDictation = true }
                 .buttonStyle(.bordered)
-            Button("Start route", systemImage: "car.fill", action: startRoute)
-                .buttonStyle(.borderedProminent)
-                .frame(maxWidth: .infinity)
+            Spacer()
+            Group {
+                Button("Optimise", systemImage: "wand.and.stars", action: optimise)
+                    .labelStyle(.iconOnly)
+                    .buttonStyle(.bordered)
+                Button("Start route", systemImage: "car.fill", action: startRoute)
+                    .buttonStyle(.borderedProminent)
+            }
+            .disabled(todaysErrands.isEmpty)
         }
-        .disabled(todaysErrands.isEmpty)
         .padding()
         .background(.bar)
     }
@@ -124,6 +150,19 @@ struct TodayView: View {
     }
 
     /// Re-orders unlocked stops for the best plan.
+    /// Removes every errand to start fresh. Saved places and nicknames stay.
+    private func clearAll() {
+        for errand in allErrands { context.delete(errand) }
+    }
+
+    /// Plans newly dictated errands once the list has picked them up.
+    private func optimiseNewErrands() {
+        Task {
+            try? await Task.sleep(for: .milliseconds(300))
+            optimise()
+        }
+    }
+
     private func optimise() {
         guard let origin else { return }
         let best = scheduler.optimised(from: origin, startingAt: .now, stops: todaysErrands.map(\.planStop))
