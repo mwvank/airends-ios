@@ -38,18 +38,30 @@ final class DictationRecorder {
 
             let request = SFSpeechAudioBufferRecognitionRequest()
             request.shouldReportPartialResults = true
+            #if targetEnvironment(simulator)
+            // The simulator often lacks on-device speech models.
+            request.requiresOnDeviceRecognition = false
+            #else
             request.requiresOnDeviceRecognition = recognizer.supportsOnDeviceRecognition
+            #endif
             self.request = request
 
-            Self.installTap(on: audioEngine.inputNode, feeding: request)
+            guard Self.installTap(on: audioEngine.inputNode, feeding: request) else {
+                errorMessage = "No microphone found. You can type instead."
+                try? session.setActive(false)
+                return
+            }
             audioEngine.prepare()
             try audioEngine.start()
             isRecording = true
 
-            task = Self.recognize(with: recognizer, request: request) { [weak self] text, finished in
+            task = Self.recognize(with: recognizer, request: request) { [weak self] text, finished, failed in
                 Task { @MainActor in
                     guard let self else { return }
                     if let text { self.transcript = text }
+                    if failed, self.transcript.isEmpty {
+                        self.errorMessage = "Couldn't hear anything. Check the microphone, or type instead."
+                    }
                     if finished { self.stop() }
                 }
             }
@@ -71,22 +83,25 @@ final class DictationRecorder {
     // The audio tap and recognition callbacks run on background threads, so they are
     // created outside the main actor to avoid Swift 6 isolation checks trapping at runtime.
 
-    private nonisolated static func installTap(on input: AVAudioInputNode, feeding request: SFSpeechAudioBufferRecognitionRequest) {
+    /// Returns false when there is no usable microphone input.
+    private nonisolated static func installTap(on input: AVAudioInputNode, feeding request: SFSpeechAudioBufferRecognitionRequest) -> Bool {
         let format = input.outputFormat(forBus: 0)
+        guard format.sampleRate > 0, format.channelCount > 0 else { return false }
         // The request is documented as safe to append to from the audio thread.
         nonisolated(unsafe) let request = request
         input.installTap(onBus: 0, bufferSize: 1024, format: format) { buffer, _ in
             request.append(buffer)
         }
+        return true
     }
 
     private nonisolated static func recognize(
         with recognizer: SFSpeechRecognizer,
         request: SFSpeechAudioBufferRecognitionRequest,
-        onUpdate: @escaping @Sendable (String?, Bool) -> Void
+        onUpdate: @escaping @Sendable (_ text: String?, _ finished: Bool, _ failed: Bool) -> Void
     ) -> SFSpeechRecognitionTask {
         recognizer.recognitionTask(with: request) { result, error in
-            onUpdate(result?.bestTranscription.formattedString, error != nil || (result?.isFinal ?? false))
+            onUpdate(result?.bestTranscription.formattedString, error != nil || (result?.isFinal ?? false), error != nil)
         }
     }
 

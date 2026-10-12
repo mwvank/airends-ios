@@ -7,6 +7,7 @@ struct DictationView: View {
     @Environment(\.dismiss) private var dismiss
     @State private var recorder = DictationRecorder()
     @State private var reviewText: String?
+    @State private var text = ""
 
     var body: some View {
         NavigationStack {
@@ -15,11 +16,20 @@ struct DictationView: View {
                     .font(.title2.bold())
                     .multilineTextAlignment(.center)
 
-                ScrollView {
-                    Text(recorder.transcript.isEmpty ? "For example: “Stop at CVS for my prescription, do the grocery shopping, and pick up the kids at 3.”" : recorder.transcript)
-                        .font(.title3)
-                        .foregroundStyle(recorder.transcript.isEmpty ? .secondary : .primary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
+                // Fills in as you speak, and can be typed into or corrected.
+                TextField(
+                    "For example: “Stop at CVS for my prescription, do the grocery shopping, and pick up the kids at 3.”",
+                    text: $text,
+                    axis: .vertical
+                )
+                .font(.title3)
+                .lineLimit(4...10)
+                .frame(maxHeight: .infinity, alignment: .top)
+                .onChange(of: recorder.transcript) { _, newValue in text = newValue }
+
+                if recorder.isRecording {
+                    Label("Listening…", systemImage: "waveform")
+                        .foregroundStyle(.secondary)
                 }
 
                 if let error = recorder.errorMessage {
@@ -41,10 +51,10 @@ struct DictationView: View {
 
                 Button("Plan it") {
                     recorder.stop()
-                    reviewText = recorder.transcript
+                    reviewText = text
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(recorder.transcript.trimmingCharacters(in: .whitespaces).isEmpty)
+                .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
             .padding()
             .toolbar {
