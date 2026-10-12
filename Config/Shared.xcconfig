@@ -1,12 +1,12 @@
 // App identity in one place, so renaming the app is a one-line change.
-// "Airends" is a working title; the code and module use the neutral name ErrandPlanner.
-APP_DISPLAY_NAME = Airends
+// The code and module use the neutral name ErrandPlanner.
+APP_DISPLAY_NAME = Errandeer
 
 // Replace with your own reverse-domain ID before the first TestFlight build.
 // It cannot change after the app is on the App Store.
 APP_BUNDLE_ID = com.mwvank.errandplanner
 
-// Set to your Apple Developer Team ID to sign on a real device.
+// Set in Config/Local.xcconfig (see below) to sign on a real device.
 DEVELOPMENT_TEAM =
 CODE_SIGN_STYLE = Automatic
 
@@ -14,3 +14,9 @@ CODE_SIGN_STYLE = Automatic
 // (xcconfig treats "//" as a comment). Example: us-central1-airends.cloudfunctions.net/api
 // Leave empty to use MapKit search and estimated drive times.
 BACKEND_HOST =
+
+// Your own settings, kept out of the repo: BACKEND_HOST and DEVELOPMENT_TEAM.
+// Create Config/Local.xcconfig with lines like:
+//   BACKEND_HOST = api-abc123-uc.a.run.app
+//   DEVELOPMENT_TEAM = ABCDE12345
+#include? "Local.xcconfig"

@@ -16,6 +16,7 @@ xcuserdata/
 *.mobileprovision
 GoogleService-Info.plist
 Secrets.xcconfig
+Config/Local.xcconfig
 .env
 
 .DS_Store

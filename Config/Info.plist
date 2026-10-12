@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<!-- Merged with the keys Xcode generates from project.yml. -->
-	<key>AirendsBackendHost</key>
+	<key>ErrandeerBackendHost</key>
 	<string>$(BACKEND_HOST)</string>
 </dict>
 </plist>

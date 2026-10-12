@@ -22,7 +22,7 @@ struct NavigationChoiceView: View {
             choiceButton(
                 .googleMaps,
                 title: "Google Maps",
-                detail: "Recommended. Matches Airends' timing, since your plan was built with Google's traffic data."
+                detail: "Recommended. Matches Errandeer' timing, since your plan was built with Google's traffic data."
             )
             choiceButton(
                 .appleMaps,

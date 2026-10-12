@@ -1,4 +1,4 @@
-# Airends (working title)
+# Errandeer
 
 A smart errand planner for iPhone. Tell it what you need to do today and it works out when to leave and the best order to go in, then hands the route to Google Maps or Apple Maps.
 
@@ -35,7 +35,7 @@ cd Packages/ErrandKit && swift test
 
 ## Naming
 
-"Airends" is a working title. Code and modules use the neutral name **ErrandPlanner**; the name users see comes from `APP_DISPLAY_NAME` in `Config/Shared.xcconfig`.
+Code and modules use the neutral name **ErrandPlanner**; the name users see comes from `APP_DISPLAY_NAME` in `Config/Shared.xcconfig`.
 
 ## What's built so far (milestone 1: foundation)
 
@@ -49,12 +49,12 @@ cd Packages/ErrandKit && swift test
 ## Milestone 2: Siri and voice
 
 - **Plan my day by voice:** tap **Plan my day**, say your errands, and review them as editable cards before they're added and the route is optimised.
-- **Siri:** "Hey Siri, plan my day in Airends" or "Hey Siri, add an errand in Airends". Siri asks what you need to do, then the app opens with the errands ready to review. These phrases also appear in Shortcuts, Spotlight and the Action Button settings.
+- **Siri:** "Hey Siri, plan my day in Errandeer" or "Hey Siri, add an errand in Errandeer". Siri asks what you need to do, then the app opens with the errands ready to review. These phrases also appear in Shortcuts, Spotlight and the Action Button settings.
 - **Understanding:** Apple's on-device language model (Foundation Models) turns speech into errands. iPhones without Apple Intelligence use a built-in rule-based parser instead (`HeuristicErrandParser`).
 - **Your places:** "the store" or "CVS" is matched to places you already use. Once "the store" is resolved, it's remembered as a nickname. Nicknames can be edited in **Settings → My places**.
 - **Typing still works:** everything is also available without the microphone via **+**.
 
-Siri note: Apple only allows fixed phrases (plus the app name) to launch a shortcut directly, so "Hey Siri, add pick up dry cleaning to Airends" in one breath isn't possible. Siri asks a quick follow-up question instead.
+Siri note: Apple only allows fixed phrases (plus the app name) to launch a shortcut directly, so "Hey Siri, add pick up dry cleaning to Errandeer" in one breath isn't possible. Siri asks a quick follow-up question instead.
 
 ## Google proof of concept (milestone 3)
 

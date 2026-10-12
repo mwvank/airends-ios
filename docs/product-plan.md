@@ -1,10 +1,10 @@
-# Airends: Product Plan (v1)
+# Errandeer: Product Plan (v1)
 
-_Draft, updated 12 Oct 2026. "Airends" is a working title._
+_Draft, updated 12 Oct 2026._
 
 ## What it is
 
-Airends is a smart errand planner for busy people on the go. You tell it, out loud, what you need to do today. It works out **the best time and order** to do everything, taking into account traffic, how busy each place is likely to be, opening hours, how long each errand takes, and the fixed commitments in your day. It learns your routines and favourite places as you use it, so planning gets faster and smarter over time.
+Errandeer is a smart errand planner for busy people on the go. You tell it, out loud, what you need to do today. It works out **the best time and order** to do everything, taking into account traffic, how busy each place is likely to be, opening hours, how long each errand takes, and the fixed commitments in your day. It learns your routines and favourite places as you use it, so planning gets faster and smarter over time.
 
 **Platform:** Apple only. iPhone first, with an Apple Watch companion and widgets close behind.
 **Launch region:** United States.
@@ -21,12 +21,12 @@ You say:
 
 > "Today I need to go grocery shopping, stop at CVS to pick up my medication, and pick my kids up from school."
 
-Airends replies with a plan:
+Errandeer replies with a plan:
 
 > **Leave at 12:40.** CVS (pickup, ~10 min, quiet right now) → Kroger on Main St (~35 min, less busy before 2) → home to drop groceries → **leave at 2:45** for school pickup at **3:00**.
 > _Heading out after 4 would add about 20 minutes of traffic and the store gets busy._
 
-Behind that answer, Airends:
+Behind that answer, Errandeer:
 
 - Understood three errands and recognised "pick up my kids" as a **fixed appointment** (3:00) that everything else works around.
 - Resolved "the store" and "CVS" to **the specific places you normally use**.
@@ -37,7 +37,7 @@ The plan then **adapts during the day**. If you're running late, it reshuffles a
 
 ## v1 core features
 
-1. **Talk to plan, with Siri.** Say "Hey Siri, plan my day in Airends" (or tap the mic, the Action Button or a Lock Screen control) and dictate your errands in plain language. Airends turns them into errands with places, durations and constraints, and asks a quick follow-up only when it really needs one ("Which school?"). Siri can also add a single errand on the fly: "Hey Siri, add pick up dry cleaning to Airends".
+1. **Talk to plan, with Siri.** Say "Hey Siri, plan my day in Errandeer" (or tap the mic, the Action Button or a Lock Screen control) and dictate your errands in plain language. Errandeer turns them into errands with places, durations and constraints, and asks a quick follow-up only when it really needs one ("Which school?"). Siri can also add a single errand on the fly: "Hey Siri, add pick up dry cleaning to Errandeer".
 2. **Add without the microphone.** Everything voice can do also works by hand:
    - **Type** an errand in a text field (the same smart understanding applies, so "CVS pick up meds" works).
    - **Search for a place** by name, address or category ("pharmacy near me") with a map and nearby results, then add it as a stop.
@@ -49,9 +49,9 @@ The plan then **adapts during the day**. If you're running late, it reshuffles a
    - **Opening and closing times:** never routes you to a closed store; warns when a window is tight.
    - **Errand duration:** how long each stop takes, starting from sensible defaults and learning your real times.
    - **Fixed commitments:** things like school pickup are locked in and everything else fits around them.
-4. **Reorder by hand (drag and drop).** The suggested order is a starting point. Press and drag any stop in the Today list to move it. Airends instantly recalculates leave-by times and travel times for the new order and flags any problems ("This order makes you 10 min late for the 3:00 pickup" or "Kroger closes before you'd arrive"). You can lock a stop in place, or tap "Re-optimise the rest" to let Airends re-plan around your changes.
+4. **Reorder by hand (drag and drop).** The suggested order is a starting point. Press and drag any stop in the Today list to move it. Errandeer instantly recalculates leave-by times and travel times for the new order and flags any problems ("This order makes you 10 min late for the 3:00 pickup" or "Kroger closes before you'd arrive"). You can lock a stop in place, or tap "Re-optimise the rest" to let Errandeer re-plan around your changes.
 5. **Start the route in Google Maps or Apple Maps.** When you confirm the plan, a dialog asks which app to navigate with:
-   - **Google Maps (recommended)**: "Matches Airends' timing, since your plan was built with Google's traffic data." Opens the whole route with every stop in your chosen order.
+   - **Google Maps (recommended)**: "Matches Errandeer' timing, since your plan was built with Google's traffic data." Opens the whole route with every stop in your chosen order.
    - **Apple Maps**: opens the route in Apple Maps.
    - A **"Don't ask again"** checkbox remembers the choice. It can be changed any time in Settings.
    If Google Maps isn't installed, the Google option opens it in the browser and offers to install the app.
@@ -85,7 +85,7 @@ Plus **widgets** (next stop and leave-by time) and a **Watch app** as fast follo
 ## Pricing
 
 - **Free:** the full app, supported by ads.
-- **Airends Pro:** **$3.99/month**, removes all ads.
+- **Errandeer Pro:** **$3.99/month**, removes all ads.
 
 ### Built to change
 
@@ -118,7 +118,7 @@ The pricing model is expected to evolve, so the app is set up to change it witho
 | Learning | On-device visit detection (Core Location visits) and usage history | Learns durations, favourite places and routines without sending your movements anywhere. |
 | Backend | Serverless functions on **Google Cloud / Firebase** | All Google Maps, busyness and language model calls go through it, so API keys never ship in the app. Also serves remote config. Scales automatically. |
 | Ads and subscription | **AdMob**, **StoreKit 2**, **App Tracking Transparency** | Standard and well supported. |
-| Siri and voice entry points | **App Intents / App Shortcuts** | "Hey Siri, plan my day in Airends" and "add … to Airends" work without any setup by the user, plus the Action Button and Lock Screen controls. |
+| Siri and voice entry points | **App Intents / App Shortcuts** | "Hey Siri, plan my day in Errandeer" and "add … to Errandeer" work without any setup by the user, plus the Action Button and Lock Screen controls. |
 | Manual place search | **Google Places Autocomplete** (via the backend) | Search by name, address or category with live suggestions; returns Google place IDs used everywhere else. |
 | Drag-to-reorder | SwiftUI list reordering, with the scheduler re-scoring the user's order | Users stay in control; the app explains the impact of each move. |
 | Navigation handoff | **Google Maps URLs** (`google.com/maps/dir/?api=1` with `waypoints` and place IDs) and **Apple Maps** links | Opens the chosen app with the route. Free, with no API key needed. |
@@ -128,7 +128,7 @@ The pricing model is expected to evolve, so the app is set up to change it witho
 
 ## Who pays for what
 
-- **Google Maps Platform, the busyness API and the cloud language model are billed to the app owner** (the business behind Airends), never to users. Users never see or need a Google API key.
+- **Google Maps Platform, the busyness API and the cloud language model are billed to the app owner** (the business behind Errandeer), never to users. Users never see or need a Google API key.
 - **Users pay the app owner** through the $3.99/month Pro subscription; free users are paid for by ads.
 - So the business model has to cover those API costs. Rough estimate: about 9 cents per plan past Google's free monthly allowance, or $2–3 a month for someone who plans every day.
 - **Cost controls built in from day one:** a monthly budget with alerts and hard quota caps in Google Cloud, per-user daily limits on re-planning (lower for free users), caching of results, and as few route checks per plan as possible.
@@ -160,12 +160,12 @@ Built to a professional standard from the start, so the app can grow to a large 
 
 ## Risks and things to verify early
 
-- **"Hey errands" as a wake word isn't possible.** iOS doesn't let third-party apps listen for their own wake word. The closest options are "Hey Siri, plan my day in Airends", the Action Button, a Lock Screen control, or the in-app mic. All of these can start straight into listening mode.
+- **"Hey errands" as a wake word isn't possible.** iOS doesn't let third-party apps listen for their own wake word. The closest options are "Hey Siri, plan my day in Errandeer", the Action Button, a Lock Screen control, or the in-app mic. All of these can start straight into listening mode.
 - **Busyness data costs money and coverage varies.** A third-party foot-traffic API charges per lookup. We'll cache forecasts per place (they change weekly, not hourly) and fall back to typical patterns by category when data is missing.
 - **Google API costs.** Paid per request past the free monthly allowance (see "Who pays for what"). Budgets, caps and caching keep this predictable.
 - **Running costs vs ad revenue.** Busyness lookups and cloud language model calls cost money for every free user. Caching, the on-device model and per-user daily limits keep this in check.
-- **Google Maps stop limit.** A route sent to Google Maps can hold a start, an end and **up to 9 stops in between**. That covers a normal day; for longer plans Airends sends the first 10 stops and offers "Send the rest" when you're nearly done.
-- **Google Maps picks the roads.** Google Maps keeps your stops and their order but chooses its own roads between them, using live traffic. That's what we want, but its timings may differ slightly from Airends' estimates.
+- **Google Maps stop limit.** A route sent to Google Maps can hold a start, an end and **up to 9 stops in between**. That covers a normal day; for longer plans Errandeer sends the first 10 stops and offers "Send the rest" when you're nearly done.
+- **Google Maps picks the roads.** Google Maps keeps your stops and their order but chooses its own roads between them, using live traffic. That's what we want, but its timings may differ slightly from Errandeer' estimates.
 - **Battery.** Learning from visits and nudges must use iOS's low-power location features, not constant GPS.
 
 ## Milestones
@@ -180,16 +180,18 @@ Built to a professional standard from the start, so the app can grow to a large 
 
 ## Decisions log
 
-- **12 Oct 2026:** US launch first. Family sharing later. "Airends" is a working title; the code uses a neutral internal name so a rename is cheap.
+- **12 Oct 2026:** US launch first. Family sharing later. "Airends" was a working title; the code uses a neutral internal name so a rename is cheap.
 - **12 Oct 2026:** Pricing changed to **free with ads plus Pro at $3.99/month (ad-free)**, built so the model is easy to change later. This replaces the earlier freemium-with-limits draft.
 - **12 Oct 2026:** The core of the app is a **voice-driven smart planner** that picks the best time and order based on traffic, busyness, hours, durations and fixed commitments, and learns routines and frequent places.
 
 - **12 Oct 2026:** Siri dictation plus full manual entry (typing and place search) are both first-class. Stops can be reordered by drag and drop. Completed routes can be sent to **Google Maps** with all stops in order.
 - **12 Oct 2026:** Planning data (travel times, stop order, opening hours, place search) comes from **Google**. Users choose Google Maps or Apple Maps when starting a route, with Google recommended and a "Don't ask again" option. Built to a professional security and scalability standard. Sold to **consumers on the App Store** (not licensed to businesses), with a possible acquisition as the long-term goal.
 
+- **12 Oct 2026:** The app is named **Errandeer** (no App Store app with that name was found). "Apple Errands" was ruled out because Apple doesn't allow "Apple" in app names.
+
 ## Still open
 
-- **Final name.** Needs to be available on the App Store and as a domain.
+- **Reserve the name.** Reserve "Errandeer" in App Store Connect and check the US trademark register and a domain.
 - **Brand look.** Colours and icon style.
 
 ## What building it needs
