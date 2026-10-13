@@ -34,13 +34,24 @@ final class SavedPlace {
     /// Records a use of `place`, creating the saved place the first time.
     /// A `nickname` such as "the store" is remembered if the place doesn't have one yet.
     static func recordUse(of place: PlaceRef, nickname: String? = nil, in context: ModelContext) {
-        let name = place.name
-        let descriptor = FetchDescriptor<SavedPlace>(predicate: #Predicate { $0.name == name })
-        let existing = (try? context.fetch(descriptor))?.first { $0.latitude == place.latitude && $0.longitude == place.longitude }
-        let saved = existing ?? SavedPlace(place: place)
-        if existing == nil { context.insert(saved) }
+        let saved = save(place, in: context)
         saved.useCount += 1
         saved.lastUsed = .now
         if saved.nickname == nil, let nickname { saved.nickname = nickname.lowercased() }
+    }
+
+    /// The saved place for `place`, created if it isn't saved yet. A place matches by its
+    /// Google place ID, or else by position, so renaming a saved place doesn't duplicate it.
+    @discardableResult
+    static func save(_ place: PlaceRef, in context: ModelContext) -> SavedPlace {
+        let all = (try? context.fetch(FetchDescriptor<SavedPlace>())) ?? []
+        let existing = all.first { saved in
+            if let id = place.googlePlaceID, saved.googlePlaceID == id { return true }
+            return abs(saved.latitude - place.latitude) < 0.0001 && abs(saved.longitude - place.longitude) < 0.0001
+        }
+        if let existing { return existing }
+        let saved = SavedPlace(place: place)
+        context.insert(saved)
+        return saved
     }
 }
