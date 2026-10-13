@@ -21,7 +21,7 @@ struct SettingsView: View {
                     }
                 }
 
-                Section("Airends Pro") {
+                Section("Errandeer Pro") {
                     if entitlements.isUnlocked(.adFree) {
                         Label("Pro is active. Thanks for your support!", systemImage: "checkmark.seal.fill")
                     } else {

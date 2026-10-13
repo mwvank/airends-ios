@@ -1,10 +1,10 @@
 import AppIntents
 
-/// "Hey Siri, plan my day in Airends". Siri asks what you need to do,
+/// "Hey Siri, plan my day in Errandeer". Siri asks what you need to do,
 /// then the app opens with the errands ready to review.
 struct PlanMyDayIntent: AppIntent {
     static let title: LocalizedStringResource = "Plan My Day"
-    static let description = IntentDescription("Tell Airends what you need to do today and get a plan.")
+    static let description = IntentDescription("Tell Errandeer what you need to do today and get a plan.")
     static let openAppWhenRun = true
 
     @Parameter(title: "Errands", requestValueDialog: IntentDialog("What do you need to do today?"))
@@ -17,7 +17,7 @@ struct PlanMyDayIntent: AppIntent {
     }
 }
 
-/// "Hey Siri, add an errand in Airends". Siri asks for the errand, then
+/// "Hey Siri, add an errand in Errandeer". Siri asks for the errand, then
 /// the app opens to confirm the place and add it to today's plan.
 struct AddErrandIntent: AppIntent {
     static let title: LocalizedStringResource = "Add Errand"

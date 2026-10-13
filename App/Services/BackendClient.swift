@@ -1,7 +1,7 @@
 import Foundation
 import ErrandKit
 
-/// Talks to the Airends backend, which calls Google Maps Platform on the app's behalf
+/// Talks to the Errandeer backend, which calls Google Maps Platform on the app's behalf
 /// so the paid API key never ships in the app.
 ///
 /// The backend address comes from `BACKEND_HOST` in Config/Shared.xcconfig.
@@ -12,7 +12,7 @@ struct BackendClient: Sendable {
     var session: URLSession = .shared
 
     static let shared: BackendClient? = {
-        guard let host = Bundle.main.object(forInfoDictionaryKey: "AirendsBackendHost") as? String,
+        guard let host = Bundle.main.object(forInfoDictionaryKey: "ErrandeerBackendHost") as? String,
               !host.trimmingCharacters(in: .whitespaces).isEmpty,
               let url = URL(string: "https://\(host)")
         else { return nil }
