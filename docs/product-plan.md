@@ -189,6 +189,11 @@ Built to a professional standard from the start, so the app can grow to a large 
 
 - **12 Oct 2026:** The app is named **Errandeer** (no App Store app with that name was found). "Apple Errands" was ruled out because Apple doesn't allow "Apple" in app names.
 
+## Backlog: tweaks noted during testing
+
+- **Plan timing.** Times don't work the way Mog intended yet. Revisit after the Google proof of concept.
+- **Microphone stopped after a pause or long talking** and started over. Fixed: it now keeps listening and keeps what was said until you tap stop.
+
 ## Still open
 
 - **Reserve the name.** Reserve "Errandeer" in App Store Connect and check the US trademark register and a domain.
