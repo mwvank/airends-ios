@@ -59,7 +59,7 @@ struct VoiceReviewView: View {
             PlacePickerView(initialQuery: picking.parsed.placeQuery ?? "", search: search) { place in
                 guard let index = items.firstIndex(where: { $0.id == picking.id }) else { return }
                 items[index].place = place
-                items[index].fromSavedPlaces = false
+                items[index].fromSavedPlaces = SavedPlace.existing(for: place, in: context) != nil
             }
         }
         .task { if isWorking { await understand() } }
@@ -79,6 +79,8 @@ struct VoiceReviewView: View {
                     item.fromSavedPlaces = true
                 } else {
                     item.place = try? await search.search(query, near: near).first
+                    // Offer "the store" as the nickname if the user stars this place.
+                    if PlaceResolver.isNickname(query) { item.nickname = query.lowercased() }
                 }
             }
             resolved.append(item)
@@ -101,9 +103,12 @@ struct VoiceReviewView: View {
             sortIndex += 1
             context.insert(errand)
 
-            // Learn nicknames: once "the store" is resolved to a place, remember it.
-            let nickname = item.parsed.placeQuery.flatMap { PlaceResolver.isNickname($0) && !item.fromSavedPlaces ? $0 : nil }
-            SavedPlace.recordUse(of: place, nickname: nickname, in: context)
+            // Places are only saved when the user stars them.
+            if item.addToMyPlaces && !item.fromSavedPlaces {
+                SavedPlace.addToMyPlaces(place, nickname: item.nickname, in: context)
+            } else {
+                SavedPlace.recordUse(of: place, in: context)
+            }
         }
         onAdded()
         dismiss()
@@ -114,6 +119,8 @@ struct ReviewItem: Identifiable {
     var parsed: ParsedErrand
     var place: PlaceRef?
     var fromSavedPlaces = false
+    var addToMyPlaces = false
+    var nickname = ""
 
     var id: UUID { parsed.id }
 }
@@ -134,6 +141,11 @@ private struct ReviewCard: View {
                 Spacer()
                 Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
             }
+        }
+
+        if item.place != nil {
+            AddToMyPlacesControl(isOn: $item.addToMyPlaces, nickname: $item.nickname,
+                                 alreadySaved: item.fromSavedPlaces)
         }
 
         Stepper("About \(item.parsed.durationMinutes) min", value: $item.parsed.durationMinutes, in: 5...240, step: 5)

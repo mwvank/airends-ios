@@ -16,6 +16,8 @@ struct AddErrandView: View {
     @State private var placeQuery = ""
     @State private var results: [PlaceRef] = []
     @State private var selectedPlace: PlaceRef?
+    @State private var addToMyPlaces = false
+    @State private var nickname = ""
     @State private var durationMinutes = 15
     @State private var hasFixedTime = false
     @State private var fixedTime = Date.now
@@ -35,6 +37,8 @@ struct AddErrandView: View {
                             Spacer()
                             Button("Change") { self.selectedPlace = nil }
                         }
+                        AddToMyPlacesControl(isOn: $addToMyPlaces, nickname: $nickname,
+                                             alreadySaved: isSaved(selectedPlace))
                     } else {
                         TextField("Search places, addresses or categories", text: $placeQuery)
                             .textInputAutocapitalization(.never)
@@ -85,6 +89,10 @@ struct AddErrandView: View {
         }
     }
 
+    private func isSaved(_ place: PlaceRef) -> Bool {
+        SavedPlace.existing(for: place, in: context) != nil
+    }
+
     private func choose(_ place: PlaceRef) {
         selectedPlace = place
         placeQuery = ""
@@ -102,7 +110,11 @@ struct AddErrandView: View {
         )
         errand.sortIndex = nextSortIndex
         context.insert(errand)
-        SavedPlace.recordUse(of: place, in: context)
+        if addToMyPlaces && !isSaved(place) {
+            SavedPlace.addToMyPlaces(place, nickname: nickname, in: context)
+        } else {
+            SavedPlace.recordUse(of: place, in: context)
+        }
         dismiss()
     }
 }

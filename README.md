@@ -40,7 +40,7 @@ Code and modules use the neutral name **ErrandPlanner**; the name users see come
 ## What's built so far (milestone 1: foundation)
 
 - Today screen with the day's errands as a timed route: leave-by time, drive time and time at each stop.
-- Add errands by typing and searching for places, with frequently used places saved automatically.
+- Add errands by typing and searching for places, with a star to add a place to My places.
 - Drag and drop to reorder stops (long-press a stop), with instant warnings if the new order makes you late for a fixed-time stop or reach a place after it closes.
 - Lock a stop in place and tap **Optimise** to re-order the rest.
 - **Start route** asks Google Maps (recommended) or Apple Maps, with "Don't ask again"; changeable in Settings.
@@ -51,7 +51,7 @@ Code and modules use the neutral name **ErrandPlanner**; the name users see come
 - **Plan my day by voice:** tap **Plan my day**, say your errands, and review them as editable cards before they're added and the route is optimised.
 - **Siri:** "Hey Siri, plan my day in Errandeer" or "Hey Siri, add an errand in Errandeer". Siri asks what you need to do, then the app opens with the errands ready to review. These phrases also appear in Shortcuts, Spotlight and the Action Button settings.
 - **Understanding:** Apple's on-device language model (Foundation Models) turns speech into errands. iPhones without Apple Intelligence use a built-in rule-based parser instead (`HeuristicErrandParser`).
-- **Your places:** "the store" or "CVS" is matched to places you already use. Once "the store" is resolved, it's remembered as a nickname. Nicknames can be edited in **Settings → My places**.
+- **Your places:** "the store" or "CVS" is matched to places you already use. When reviewing errands, star a place to add it to My places with a nickname like "the store". Nicknames can be edited in **Settings → My places**.
 - **Typing still works:** everything is also available without the microphone via **+**.
 
 Siri note: Apple only allows fixed phrases (plus the app name) to launch a shortcut directly, so "Hey Siri, add pick up dry cleaning to Errandeer" in one breath isn't possible. Siri asks a quick follow-up question instead.
