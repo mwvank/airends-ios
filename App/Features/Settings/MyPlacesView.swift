@@ -4,7 +4,7 @@ import MapKit
 import ErrandKit
 
 /// Saved places and their nicknames, so "the store" or "the gym" means the user's own place.
-/// Places are saved automatically as errands are added, and can be added, edited or removed here.
+/// Places are added when the user stars them while adding an errand, or with + here.
 struct MyPlacesView: View {
     @Environment(\.modelContext) private var context
     @Query(sort: \SavedPlace.useCount, order: .reverse) private var places: [SavedPlace]
@@ -14,7 +14,7 @@ struct MyPlacesView: View {
         List {
             if places.isEmpty {
                 ContentUnavailableView("No saved places yet", systemImage: "star",
-                                       description: Text("Places you use are saved here automatically. Tap + to add one now."))
+                                       description: Text("Star a place when adding an errand, or tap + to add one now."))
             }
             ForEach(places) { place in
                 NavigationLink {
@@ -124,5 +124,36 @@ private struct EditPlaceView: View {
 
     private var region: MKCoordinateRegion {
         MKCoordinateRegion(center: coordinate, latitudinalMeters: 800, longitudinalMeters: 800)
+    }
+}
+
+/// The "Add to My places" star shown when adding an errand, with the nickname
+/// the voice planner will recognise. Nothing is saved unless the user turns it on.
+struct AddToMyPlacesControl: View {
+    @Binding var isOn: Bool
+    @Binding var nickname: String
+    /// The place is already in My places, so there's nothing to add.
+    var alreadySaved = false
+
+    var body: some View {
+        if alreadySaved {
+            Label("In My places", systemImage: "star.fill")
+                .foregroundStyle(.yellow)
+                .font(.subheadline)
+        } else {
+            Button {
+                isOn.toggle()
+            } label: {
+                Label("Add to My places", systemImage: isOn ? "star.fill" : "star")
+                    .foregroundStyle(isOn ? .yellow : .secondary)
+            }
+            .buttonStyle(.borderless)
+            .accessibilityValue(isOn ? "On" : "Off")
+            if isOn {
+                TextField("Nickname for voice, e.g. the store", text: $nickname)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+            }
+        }
     }
 }

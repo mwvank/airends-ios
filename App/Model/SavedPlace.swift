@@ -3,7 +3,7 @@ import SwiftData
 import ErrandKit
 
 /// A place the user uses often, optionally with a nickname such as "the store".
-/// Saved automatically as errands are added, so future errands are one tap away.
+/// Added when the user stars a place, so future errands are one tap away.
 @Model
 final class SavedPlace {
     var name: String = ""
@@ -31,27 +31,40 @@ final class SavedPlace {
         PlaceRef(name: name, latitude: latitude, longitude: longitude, googlePlaceID: googlePlaceID)
     }
 
-    /// Records a use of `place`, creating the saved place the first time.
-    /// A `nickname` such as "the store" is remembered if the place doesn't have one yet.
-    static func recordUse(of place: PlaceRef, nickname: String? = nil, in context: ModelContext) {
+    /// Counts a use of `place` if it's already in My places. Places are only
+    /// ever added when the user asks, with `addToMyPlaces`.
+    static func recordUse(of place: PlaceRef, in context: ModelContext) {
+        guard let saved = existing(for: place, in: context) else { return }
+        saved.useCount += 1
+        saved.lastUsed = .now
+    }
+
+    /// Adds `place` to My places (or updates it), with an optional nickname such as "the store".
+    static func addToMyPlaces(_ place: PlaceRef, nickname: String?, in context: ModelContext) {
         let saved = save(place, in: context)
         saved.useCount += 1
         saved.lastUsed = .now
-        if saved.nickname == nil, let nickname { saved.nickname = nickname.lowercased() }
+        if let nickname = nickname?.trimmingCharacters(in: .whitespaces), !nickname.isEmpty {
+            saved.nickname = nickname.lowercased()
+        }
     }
 
-    /// The saved place for `place`, created if it isn't saved yet. A place matches by its
-    /// Google place ID, or else by position, so renaming a saved place doesn't duplicate it.
+    /// The saved place for `place`, created if it isn't saved yet.
     @discardableResult
     static func save(_ place: PlaceRef, in context: ModelContext) -> SavedPlace {
-        let all = (try? context.fetch(FetchDescriptor<SavedPlace>())) ?? []
-        let existing = all.first { saved in
-            if let id = place.googlePlaceID, saved.googlePlaceID == id { return true }
-            return abs(saved.latitude - place.latitude) < 0.0001 && abs(saved.longitude - place.longitude) < 0.0001
-        }
-        if let existing { return existing }
+        if let existing = existing(for: place, in: context) { return existing }
         let saved = SavedPlace(place: place)
         context.insert(saved)
         return saved
+    }
+
+    /// The saved place matching `place` by Google place ID, or else by position,
+    /// so renaming a saved place doesn't stop it matching.
+    static func existing(for place: PlaceRef, in context: ModelContext) -> SavedPlace? {
+        let all = (try? context.fetch(FetchDescriptor<SavedPlace>())) ?? []
+        return all.first { saved in
+            if let id = place.googlePlaceID, saved.googlePlaceID == id { return true }
+            return abs(saved.latitude - place.latitude) < 0.0001 && abs(saved.longitude - place.longitude) < 0.0001
+        }
     }
 }
