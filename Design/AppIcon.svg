@@ -45,14 +45,20 @@
   <!-- Muzzle -->
   <ellipse cx="512" cy="700" rx="150" ry="120" fill="#F3DEC0"/>
 
-  <!-- Eyes -->
+  <!-- Sunglasses -->
+  <defs>
+    <linearGradient id="lens" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2E3440"/>
+      <stop offset="1" stop-color="#0E1116"/>
+    </linearGradient>
+  </defs>
   <g>
-    <ellipse cx="430" cy="540" rx="40" ry="48" fill="#2B1B12"/>
-    <ellipse cx="594" cy="540" rx="40" ry="48" fill="#2B1B12"/>
-    <circle cx="444" cy="522" r="15" fill="#FFFFFF"/>
-    <circle cx="608" cy="522" r="15" fill="#FFFFFF"/>
-    <circle cx="420" cy="560" r="7" fill="#FFFFFF" opacity="0.8"/>
-    <circle cx="584" cy="560" r="7" fill="#FFFFFF" opacity="0.8"/>
+    <path d="M330 505 L 694 505" stroke="#111" stroke-width="22" stroke-linecap="round"/>
+    <path d="M352 500 L 488 500 C 492 560, 470 600, 420 600 C 372 600, 350 565, 352 500 Z" fill="url(#lens)" stroke="#111" stroke-width="14" stroke-linejoin="round"/>
+    <path d="M536 500 L 672 500 C 674 565, 652 600, 604 600 C 554 600, 532 560, 536 500 Z" fill="url(#lens)" stroke="#111" stroke-width="14" stroke-linejoin="round"/>
+    <path d="M488 512 Q 512 498, 536 512" fill="none" stroke="#111" stroke-width="14" stroke-linecap="round"/>
+    <path d="M372 520 L 410 520 L 380 565 Z" fill="#FFFFFF" opacity="0.35"/>
+    <path d="M556 520 L 594 520 L 564 565 Z" fill="#FFFFFF" opacity="0.35"/>
   </g>
   <!-- Cheeks -->
   <ellipse cx="372" cy="625" rx="38" ry="22" fill="#F28C8C" opacity="0.55"/>
