@@ -40,7 +40,7 @@ struct DictationView: View {
                     if recorder.isRecording {
                         recorder.stop()
                     } else {
-                        Task { await recorder.start() }
+                        Task { await recorder.start(keeping: text) }
                     }
                 } label: {
                     Image(systemName: recorder.isRecording ? "stop.circle.fill" : "mic.circle.fill")
