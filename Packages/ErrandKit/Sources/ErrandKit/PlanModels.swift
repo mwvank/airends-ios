@@ -7,9 +7,12 @@ public struct PlaceRef: Hashable, Codable, Sendable {
     public var latitude: Double
     public var longitude: Double
     public var googlePlaceID: String?
+    /// Street address for display, such as "123 Main St, Springfield, NJ". Empty if unknown.
+    public var address: String
 
-    public init(name: String, latitude: Double, longitude: Double, googlePlaceID: String? = nil) {
+    public init(name: String, latitude: Double, longitude: Double, googlePlaceID: String? = nil, address: String = "") {
         self.name = name
+        self.address = address
         self.latitude = latitude
         self.longitude = longitude
         self.googlePlaceID = googlePlaceID

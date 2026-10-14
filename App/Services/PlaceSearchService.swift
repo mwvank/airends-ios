@@ -41,7 +41,8 @@ struct MapKitPlaceSearch: PlaceSearchService {
             return PlaceRef(
                 name: item.name ?? trimmed,
                 latitude: coordinate.latitude,
-                longitude: coordinate.longitude
+                longitude: coordinate.longitude,
+                address: item.address?.shortAddress ?? item.address?.fullAddress ?? ""
             )
         }
     }

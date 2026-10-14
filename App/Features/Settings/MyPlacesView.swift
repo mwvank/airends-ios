@@ -50,6 +50,9 @@ private struct PlaceRow: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(place.name).font(.headline)
+            if !place.address.isEmpty {
+                Text(PlaceLabel.shortened(place.address)).font(.subheadline).foregroundStyle(.secondary)
+            }
             if let nickname = place.nickname {
                 Text("“\(nickname)”").font(.subheadline).foregroundStyle(.secondary)
             }
@@ -89,6 +92,9 @@ private struct EditPlaceView: View {
                 .frame(height: 180)
                 .listRowInsets(EdgeInsets())
                 .id("\(place.latitude),\(place.longitude)")
+                if !place.address.isEmpty {
+                    Text(PlaceLabel.shortened(place.address))
+                }
                 Button("Change location", systemImage: "mappin.and.ellipse") { changingLocation = true }
             }
             Section {
@@ -102,6 +108,7 @@ private struct EditPlaceView: View {
                 place.latitude = newPlace.latitude
                 place.longitude = newPlace.longitude
                 place.googlePlaceID = newPlace.googlePlaceID
+                place.address = newPlace.address
             }
         }
         .onDisappear {

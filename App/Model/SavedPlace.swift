@@ -11,6 +11,7 @@ final class SavedPlace {
     var latitude: Double = 0
     var longitude: Double = 0
     var googlePlaceID: String?
+    var address: String = ""
     var useCount: Int = 0
     var lastUsed: Date = Date.now
 
@@ -19,6 +20,7 @@ final class SavedPlace {
         self.latitude = place.latitude
         self.longitude = place.longitude
         self.googlePlaceID = place.googlePlaceID
+        self.address = place.address
     }
 
     /// The nickname as editable text; empty clears it.
@@ -28,7 +30,7 @@ final class SavedPlace {
     }
 
     var place: PlaceRef {
-        PlaceRef(name: name, latitude: latitude, longitude: longitude, googlePlaceID: googlePlaceID)
+        PlaceRef(name: name, latitude: latitude, longitude: longitude, googlePlaceID: googlePlaceID, address: address)
     }
 
     /// Counts a use of `place` if it's already in My places. Places are only

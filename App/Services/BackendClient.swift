@@ -44,7 +44,7 @@ struct BackendClient: Sendable {
         }
         let response: PlacesResponse = try await post("places", body)
         return response.places.map {
-            PlaceRef(name: $0.name, latitude: $0.latitude, longitude: $0.longitude, googlePlaceID: $0.id)
+            PlaceRef(name: $0.name, latitude: $0.latitude, longitude: $0.longitude, googlePlaceID: $0.id, address: $0.address)
         }
     }
 
