@@ -134,34 +134,3 @@ private struct EditPlaceView: View {
         MKCoordinateRegion(center: coordinate, latitudinalMeters: 800, longitudinalMeters: 800)
     }
 }
-
-/// The "Add to My places" star shown when adding an errand, with the nickname
-/// the voice planner will recognise. Nothing is saved unless the user turns it on.
-struct AddToMyPlacesControl: View {
-    @Binding var isOn: Bool
-    @Binding var nickname: String
-    /// The place is already in My places, so there's nothing to add.
-    var alreadySaved = false
-
-    var body: some View {
-        if alreadySaved {
-            Label("In My places", systemImage: "star.fill")
-                .foregroundStyle(.yellow)
-                .font(.subheadline)
-        } else {
-            Button {
-                isOn.toggle()
-            } label: {
-                Label("Add to My places", systemImage: isOn ? "star.fill" : "star")
-                    .foregroundStyle(isOn ? .yellow : .secondary)
-            }
-            .buttonStyle(.borderless)
-            .accessibilityValue(isOn ? "On" : "Off")
-            if isOn {
-                TextField("Nickname for voice, e.g. the store", text: $nickname)
-                    .textInputAutocapitalization(.never)
-                    .autocorrectionDisabled()
-            }
-        }
-    }
-}

@@ -65,6 +65,7 @@ final class SavedPlace {
     static func existing(for place: PlaceRef, in context: ModelContext) -> SavedPlace? {
         let all = (try? context.fetch(FetchDescriptor<SavedPlace>())) ?? []
         return all.first { saved in
+            if saved.isDeleted { return false }
             if let id = place.googlePlaceID, saved.googlePlaceID == id { return true }
             return abs(saved.latitude - place.latitude) < 0.0001 && abs(saved.longitude - place.longitude) < 0.0001
         }
