@@ -143,7 +143,9 @@ private struct ReviewCard: View {
             onSearch: onChoosePlace
         )
 
-        Stepper("About \(item.parsed.durationMinutes) min", value: $item.parsed.durationMinutes, in: 5...240, step: 5)
+        Stepper(value: $item.parsed.durationMinutes, in: 5...240, step: 5) {
+            LabeledContent("Time at location", value: "\(item.parsed.durationMinutes) min")
+        }
 
         if let fixed = item.parsed.fixedTime, let date = fixed.date(on: .now) {
             HStack {
