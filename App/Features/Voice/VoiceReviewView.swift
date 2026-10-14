@@ -40,7 +40,7 @@ struct VoiceReviewView: View {
             } else {
                 ForEach($items) { $item in
                     Section {
-                        ReviewCard(item: $item, onChoosePlace: { pickingPlaceFor = item }) {
+                        ReviewCard(item: $item, search: search, onChoosePlace: { pickingPlaceFor = item }) {
                             items.removeAll { $0.id == item.id }
                         }
                     }
@@ -59,7 +59,7 @@ struct VoiceReviewView: View {
             PlacePickerView(initialQuery: picking.parsed.placeQuery ?? "", search: search) { place in
                 guard let index = items.firstIndex(where: { $0.id == picking.id }) else { return }
                 items[index].place = place
-                items[index].fromSavedPlaces = SavedPlace.existing(for: place, in: context) != nil
+                items[index].addToMyPlaces = false
             }
         }
         .task { if isWorking { await understand() } }
@@ -76,7 +76,6 @@ struct VoiceReviewView: View {
             if let query = errand.placeQuery {
                 if let match = PlaceResolver.match(query, in: known) {
                     item.place = match
-                    item.fromSavedPlaces = true
                 } else {
                     item.place = try? await search.search(query, near: near).first
                     // Offer "the store" as the nickname if the user stars this place.
@@ -104,7 +103,7 @@ struct VoiceReviewView: View {
             context.insert(errand)
 
             // Places are only saved when the user stars them.
-            if item.addToMyPlaces && !item.fromSavedPlaces {
+            if item.addToMyPlaces && SavedPlace.existing(for: place, in: context) == nil {
                 SavedPlace.addToMyPlaces(place, nickname: item.nickname, in: context)
             } else {
                 SavedPlace.recordUse(of: place, in: context)
@@ -118,7 +117,6 @@ struct VoiceReviewView: View {
 struct ReviewItem: Identifiable {
     var parsed: ParsedErrand
     var place: PlaceRef?
-    var fromSavedPlaces = false
     var addToMyPlaces = false
     var nickname = ""
 
@@ -127,6 +125,7 @@ struct ReviewItem: Identifiable {
 
 private struct ReviewCard: View {
     @Binding var item: ReviewItem
+    var search: any PlaceSearchService
     var onChoosePlace: () -> Void
     var onRemove: () -> Void
 
@@ -134,24 +133,15 @@ private struct ReviewCard: View {
         TextField("Errand", text: $item.parsed.title)
             .font(.headline)
 
-        Button(action: onChoosePlace) {
-            HStack {
-                if let place = item.place {
-                    PlaceLabel(name: place.name, address: place.address,
-                               systemImage: item.fromSavedPlaces ? "star.fill" : "mappin.circle.fill")
-                } else {
-                    Label("Choose a place", systemImage: "mappin.circle.fill")
-                        .foregroundStyle(.orange)
-                }
-                Spacer()
-                Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
-            }
-        }
-
-        if item.place != nil {
-            AddToMyPlacesControl(isOn: $item.addToMyPlaces, nickname: $item.nickname,
-                                 alreadySaved: item.fromSavedPlaces)
-        }
+        ErrandPlaceRow(
+            place: item.place,
+            query: item.parsed.placeQuery ?? "",
+            search: search,
+            addToMyPlaces: $item.addToMyPlaces,
+            nickname: $item.nickname,
+            onChoose: { item.place = $0 },
+            onSearch: onChoosePlace
+        )
 
         Stepper("About \(item.parsed.durationMinutes) min", value: $item.parsed.durationMinutes, in: 5...240, step: 5)
 

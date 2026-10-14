@@ -14,6 +14,8 @@ struct AddErrandView: View {
 
     @State private var title = ""
     @State private var placeQuery = ""
+    /// The search that found the selected place, for the dropdown of other choices.
+    @State private var lastQuery = ""
     @State private var results: [PlaceRef] = []
     @State private var selectedPlace: PlaceRef?
     @State private var addToMyPlaces = false
@@ -32,13 +34,15 @@ struct AddErrandView: View {
 
                 Section("Where") {
                     if let selectedPlace {
-                        HStack {
-                            PlaceLabel(name: selectedPlace.name, address: selectedPlace.address)
-                            Spacer()
-                            Button("Change") { self.selectedPlace = nil }
-                        }
-                        AddToMyPlacesControl(isOn: $addToMyPlaces, nickname: $nickname,
-                                             alreadySaved: isSaved(selectedPlace))
+                        ErrandPlaceRow(
+                            place: selectedPlace,
+                            query: lastQuery,
+                            search: search,
+                            addToMyPlaces: $addToMyPlaces,
+                            nickname: $nickname,
+                            onChoose: { self.selectedPlace = $0 },
+                            onSearch: { self.selectedPlace = nil }
+                        )
                     } else {
                         TextField("Search places, addresses or categories", text: $placeQuery)
                             .textInputAutocapitalization(.never)
@@ -97,6 +101,7 @@ struct AddErrandView: View {
 
     private func choose(_ place: PlaceRef) {
         selectedPlace = place
+        lastQuery = placeQuery
         placeQuery = ""
         results = []
     }
