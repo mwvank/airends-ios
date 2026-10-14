@@ -28,6 +28,7 @@ struct MyPlacesView: View {
             }
         }
         .navigationTitle("My places")
+        .task { await AddressLookup.fillMissing(in: context) }
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
                 Button("Add place", systemImage: "plus") { addingPlace = true }

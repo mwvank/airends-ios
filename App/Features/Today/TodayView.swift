@@ -56,6 +56,11 @@ struct TodayView: View {
         }
     }
 
+    /// Errands still waiting for an address; older errands were saved without one.
+    private var missingAddressCount: Int {
+        allErrands.filter { $0.placeAddress.isEmpty }.count
+    }
+
     /// Changes when the set of places changes (not when stops are only reordered).
     private var liveDataKey: String {
         let places = ([origin].compactMap { $0 } + todaysErrands.map(\.place)).map(GoogleTravelTimes.key)
@@ -99,6 +104,7 @@ struct TodayView: View {
             }
             .safeAreaInset(edge: .bottom) { bottomBar }
             .task(id: liveDataKey) { await loadLiveData() }
+            .task(id: missingAddressCount) { await AddressLookup.fillMissing(in: context) }
             .sheet(isPresented: $showingAdd) { AddErrandView(nextSortIndex: (allErrands.map(\.sortIndex).max() ?? -1) + 1) }
             .sheet(isPresented: $showingSettings) { SettingsView() }
             .sheet(isPresented: $showingDictation) { DictationView(onAdded: optimiseNewErrands) }
@@ -107,7 +113,7 @@ struct TodayView: View {
                 NavigationStack { VoiceReviewView(text: request.text, onAdded: optimiseNewErrands) }
             }
             .sheet(isPresented: $showingNavigationChoice) {
-                NavigationChoiceView { app in openRoute(in: app) }
+                NavigationChoiceView(firstStop: todaysErrands.first?.place) { app in openRoute(in: app) }
                     .presentationDetents([.medium])
             }
         }

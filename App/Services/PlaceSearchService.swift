@@ -1,5 +1,6 @@
 import Foundation
 import MapKit
+import SwiftData
 import ErrandKit
 
 /// Finds places by name, address or category.
@@ -44,6 +45,45 @@ struct MapKitPlaceSearch: PlaceSearchService {
                 longitude: coordinate.longitude,
                 address: item.address?.shortAddress ?? item.address?.fullAddress ?? ""
             )
+        }
+    }
+}
+
+/// Looks up street addresses for places saved before addresses were stored,
+/// so every errand and saved place shows where it actually is.
+@MainActor
+enum AddressLookup {
+    /// The street address at a coordinate, from Apple's reverse geocoder.
+    static func address(latitude: Double, longitude: Double) async -> String? {
+        guard let request = MKReverseGeocodingRequest(location: CLLocation(latitude: latitude, longitude: longitude)),
+              let item = try? await request.mapItems.first,
+              let text = item.address?.shortAddress ?? item.address?.fullAddress,
+              !text.isEmpty
+        else { return nil }
+        return text
+    }
+
+    /// Fills in the address of every errand and saved place that has none.
+    /// Apple limits how fast addresses can be looked up, so each run handles a batch.
+    static func fillMissing(in context: ModelContext) async {
+        let errands = (try? context.fetch(FetchDescriptor<Errand>(predicate: #Predicate { $0.placeAddress == "" }))) ?? []
+        let places = (try? context.fetch(FetchDescriptor<SavedPlace>(predicate: #Predicate { $0.address == "" }))) ?? []
+        var found: [String: String] = [:]
+        var lookups = 0
+        func lookUp(_ latitude: Double, _ longitude: Double) async -> String? {
+            let key = "\(latitude),\(longitude)"
+            if let known = found[key] { return known }
+            guard lookups < 40 else { return nil }
+            lookups += 1
+            let result = await Self.address(latitude: latitude, longitude: longitude)
+            if let result { found[key] = result }
+            return result
+        }
+        for place in places {
+            if let address = await lookUp(place.latitude, place.longitude), !place.isDeleted { place.address = address }
+        }
+        for errand in errands {
+            if let address = await lookUp(errand.latitude, errand.longitude), !errand.isDeleted { errand.placeAddress = address }
         }
     }
 }
