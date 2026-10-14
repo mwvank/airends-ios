@@ -49,7 +49,7 @@ public struct ClockTime: Hashable, Codable, Sendable {
         let patterns = [
             "\\b(?:at|by|around)\\s+(\\d{1,2})(?::(\\d{2}))?\\s*(a\\.?m\\.?|p\\.?m\\.?)?",
             "\\b(\\d{1,2})(?::(\\d{2}))?\\s*(a\\.?m\\.?|p\\.?m\\.?)",
-            "\\b(\\d{1,2}):(\\d{2})()",
+            "\\b(\\d{1,2}):(\\d{2})()(?!\\s*[ap]\\.?m)",
             "\\b(\\d{1,2})()\\s*o'?clock()"
         ]
         for pattern in patterns {
