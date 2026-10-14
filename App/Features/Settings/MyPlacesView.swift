@@ -86,6 +86,11 @@ private struct EditPlaceView: View {
             } footer: {
                 Text("Say the nickname when planning by voice, like “stop at the store”.")
             }
+            Section {
+                FixedTimeRow(time: $place.fixedTime)
+            } footer: {
+                Text("Errands here start at this time, like school pickup at 3:00. Leave it empty for places you can visit any time.")
+            }
             Section("Location") {
                 Map(initialPosition: .region(region), interactionModes: []) {
                     Marker(place.name, coordinate: coordinate)

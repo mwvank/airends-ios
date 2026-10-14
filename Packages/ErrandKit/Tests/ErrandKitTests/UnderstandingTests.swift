@@ -91,3 +91,38 @@ import Testing
         #expect(!PlaceResolver.isNickname("CVS"))
     }
 }
+
+@Suite struct MentionedTimeTests {
+    @Test func findsSpokenTimes() {
+        let times = ClockTime.mentioned(in: "pick up the kids from school at 3 and the dentist at 10:30 am")
+        #expect(times.contains(ClockTime(hour: 15, minute: 0)))
+        #expect(times.contains(ClockTime(hour: 3, minute: 0)))
+        #expect(times.contains(ClockTime(hour: 10, minute: 30)))
+        #expect(!times.contains(ClockTime(hour: 22, minute: 30)))
+    }
+
+    @Test func readsWordsAndNoon() {
+        let times = ClockTime.mentioned(in: "lunch at noon, gym at five, call around 6pm")
+        #expect(times.contains(ClockTime(hour: 12, minute: 0)))
+        #expect(times.contains(ClockTime(hour: 17, minute: 0)))
+        #expect(times.contains(ClockTime(hour: 18, minute: 0)))
+    }
+
+    @Test func noTimeMeansNone() {
+        #expect(ClockTime.mentioned(in: "go to the store and pick up my meds at CVS").isEmpty)
+    }
+
+    @Test func roundTripsThroughMinutes() {
+        let time = ClockTime(hour: 15, minute: 45)
+        #expect(ClockTime(minutesSinceMidnight: time.minutesSinceMidnight) == time)
+    }
+}
+
+@Suite struct DurationTextTests {
+    @Test func formatsMinutesAndHours() {
+        #expect(DurationText.format(minutes: 45) == "45 min")
+        #expect(DurationText.format(minutes: 60) == "1 hr")
+        #expect(DurationText.format(minutes: 75) == "1 hr 15 min")
+        #expect(DurationText.format(minutes: 240) == "4 hr")
+    }
+}
