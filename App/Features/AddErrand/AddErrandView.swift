@@ -64,7 +64,9 @@ struct AddErrandView: View {
                 }
 
                 Section("When") {
-                    Stepper("About \(durationMinutes) min there", value: $durationMinutes, in: 5...240, step: 5)
+                    Stepper(value: $durationMinutes, in: 5...240, step: 5) {
+                        LabeledContent("Time at location", value: "\(durationMinutes) min")
+                    }
                     Toggle("Fixed time", isOn: $hasFixedTime)
                     if hasFixedTime {
                         DatePicker("Starts at", selection: $fixedTime, displayedComponents: .hourAndMinute)
