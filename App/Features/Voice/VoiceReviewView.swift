@@ -60,6 +60,9 @@ struct VoiceReviewView: View {
                 guard let index = items.firstIndex(where: { $0.id == picking.id }) else { return }
                 items[index].place = place
                 items[index].addToMyPlaces = false
+                if items[index].parsed.fixedTime == nil {
+                    items[index].parsed.fixedTime = SavedPlace.fixedTime(for: place, in: context)
+                }
             }
         }
         .task { if isWorking { await understand() } }
@@ -76,6 +79,9 @@ struct VoiceReviewView: View {
             if let query = errand.placeQuery {
                 if let match = PlaceResolver.match(query, in: known) {
                     item.place = match
+                    if item.parsed.fixedTime == nil {
+                        item.parsed.fixedTime = SavedPlace.fixedTime(for: match, in: context)
+                    }
                 } else {
                     item.place = try? await search.search(query, near: near).first
                     // Offer "the store" as the nickname if the user stars this place.
@@ -126,6 +132,7 @@ struct ReviewItem: Identifiable {
 private struct ReviewCard: View {
     @Binding var item: ReviewItem
     var search: any PlaceSearchService
+    @Environment(\.modelContext) private var context
     var onChoosePlace: () -> Void
     var onRemove: () -> Void
 
@@ -139,23 +146,69 @@ private struct ReviewCard: View {
             search: search,
             addToMyPlaces: $item.addToMyPlaces,
             nickname: $item.nickname,
-            onChoose: { item.place = $0 },
+            onChoose: { place in
+                item.place = place
+                if item.parsed.fixedTime == nil {
+                    item.parsed.fixedTime = SavedPlace.fixedTime(for: place, in: context)
+                }
+            },
             onSearch: onChoosePlace
         )
 
-        Stepper(value: $item.parsed.durationMinutes, in: 5...240, step: 5) {
-            LabeledContent("Time at location", value: "\(item.parsed.durationMinutes) min")
-        }
+        DurationStepper(minutes: $item.parsed.durationMinutes)
 
-        if let fixed = item.parsed.fixedTime, let date = fixed.date(on: .now) {
-            HStack {
-                Label("At \(date.formatted(date: .omitted, time: .shortened))", systemImage: "clock.fill")
-                Spacer()
-                Button("Remove") { item.parsed.fixedTime = nil }
-                    .font(.caption)
-            }
-        }
+        FixedTimeRow(time: $item.parsed.fixedTime)
 
         Button("Remove errand", role: .destructive, action: onRemove)
+    }
+}
+
+/// How long the user spends at a place, shown as "45 min" or "1 hr 15 min".
+struct DurationStepper: View {
+    @Binding var minutes: Int
+
+    var body: some View {
+        Stepper(value: $minutes, in: 5...240, step: 5) {
+            LabeledContent("Time at location:", value: DurationText.format(minutes: minutes))
+        }
+    }
+}
+
+/// A time an errand must start, such as school pickup at 3:00. Empty for errands
+/// that can happen any time; tapping "Set time" adds one.
+struct FixedTimeRow: View {
+    @Binding var time: ClockTime?
+
+    var body: some View {
+        HStack {
+            Label("Fixed time:", systemImage: "clock")
+            Spacer()
+            if let current = time {
+                DatePicker(
+                    "Fixed time",
+                    selection: Binding(get: { current.date(on: .now) ?? .now }, set: { time = ClockTime($0) }),
+                    displayedComponents: .hourAndMinute
+                )
+                .labelsHidden()
+                Button {
+                    withAnimation { time = nil }
+                } label: {
+                    Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                }
+                .buttonStyle(.borderless)
+                .accessibilityLabel("Remove fixed time")
+            } else {
+                Button("Set time") {
+                    withAnimation { time = Self.nextHour() }
+                }
+                .buttonStyle(.borderless)
+            }
+        }
+    }
+
+    /// The next whole hour, a sensible starting point for the picker.
+    static func nextHour(after date: Date = .now) -> ClockTime {
+        let hour = Calendar.current.component(.hour, from: date)
+        return ClockTime(hour: (hour + 1) % 24, minute: 0)
     }
 }

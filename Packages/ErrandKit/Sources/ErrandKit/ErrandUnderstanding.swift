@@ -20,6 +20,69 @@ public struct ClockTime: Hashable, Codable, Sendable {
     public func date(on day: Date, calendar: Calendar = .current) -> Date? {
         calendar.date(bySettingHour: hour, minute: minute, second: 0, of: day)
     }
+
+    /// The time of day of `date`.
+    public init(_ date: Date, calendar: Calendar = .current) {
+        let parts = calendar.dateComponents([.hour, .minute], from: date)
+        self.init(hour: parts.hour ?? 0, minute: parts.minute ?? 0)
+    }
+
+    /// Minutes after midnight, for storing in SwiftData.
+    public var minutesSinceMidnight: Int { hour * 60 + minute }
+
+    public init(minutesSinceMidnight: Int) {
+        self.init(hour: (minutesSinceMidnight / 60) % 24, minute: minutesSinceMidnight % 60)
+    }
+
+    /// Every time of day mentioned in `text`, such as "at 3", "3:30pm", "at three" or "noon".
+    /// A time without am or pm counts as both, since "at 3" could be either.
+    public static func mentioned(in text: String) -> Set<ClockTime> {
+        let words = ["one": 1, "two": 2, "three": 3, "four": 4, "five": 5, "six": 6, "seven": 7,
+                     "eight": 8, "nine": 9, "ten": 10, "eleven": 11, "twelve": 12]
+        var lowered = text.lowercased()
+        for (word, number) in words {
+            lowered = lowered.replacingOccurrences(of: "\\b(at|by|around) \(word)\\b", with: "$1 \(number)", options: .regularExpression)
+        }
+        var times = Set<ClockTime>()
+        if lowered.range(of: "\\bnoon\\b", options: .regularExpression) != nil { times.insert(ClockTime(hour: 12, minute: 0)) }
+
+        let patterns = [
+            "\\b(?:at|by|around)\\s+(\\d{1,2})(?::(\\d{2}))?\\s*(a\\.?m\\.?|p\\.?m\\.?)?",
+            "\\b(\\d{1,2})(?::(\\d{2}))?\\s*(a\\.?m\\.?|p\\.?m\\.?)",
+            "\\b(\\d{1,2}):(\\d{2})()",
+            "\\b(\\d{1,2})()\\s*o'?clock()"
+        ]
+        for pattern in patterns {
+            guard let regex = try? NSRegularExpression(pattern: pattern) else { continue }
+            for match in regex.matches(in: lowered, range: NSRange(lowered.startIndex..., in: lowered)) {
+                func group(_ i: Int) -> String? {
+                    guard let range = Range(match.range(at: i), in: lowered), !range.isEmpty else { return nil }
+                    return String(lowered[range])
+                }
+                guard let hour = group(1).flatMap(Int.init), (0...23).contains(hour) else { continue }
+                let minute = group(2).flatMap(Int.init) ?? 0
+                guard minute < 60 else { continue }
+                switch group(3)?.first {
+                case "p": times.insert(ClockTime(hour: hour < 12 ? hour + 12 : hour, minute: minute))
+                case "a": times.insert(ClockTime(hour: hour == 12 ? 0 : hour, minute: minute))
+                default:
+                    times.insert(ClockTime(hour: hour, minute: minute))
+                    if hour < 12 { times.insert(ClockTime(hour: hour + 12, minute: minute)) }
+                    if hour == 12 { times.insert(ClockTime(hour: 0, minute: minute)) }
+                }
+            }
+        }
+        return times
+    }
+}
+
+/// Formats minutes spent somewhere, such as "45 min", "1 hr" or "1 hr 15 min".
+public enum DurationText {
+    public static func format(minutes: Int) -> String {
+        guard minutes >= 60 else { return "\(minutes) min" }
+        let hours = minutes / 60, rest = minutes % 60
+        return rest == 0 ? "\(hours) hr" : "\(hours) hr \(rest) min"
+    }
 }
 
 /// One errand understood from what the user said or typed, before its place is resolved.

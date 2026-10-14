@@ -19,7 +19,13 @@ struct OnDeviceErrandUnderstanding: ErrandUnderstandingService {
         do {
             let session = LanguageModelSession(instructions: Self.instructions)
             let response = try await session.respond(to: text, generating: GeneratedErrandList.self)
-            let errands = response.content.errands.map(\.parsed)
+            // The model sometimes invents a time; keep only times the user actually said.
+            let mentioned = ClockTime.mentioned(in: text)
+            let errands = response.content.errands.map(\.parsed).map { errand in
+                var errand = errand
+                if let time = errand.fixedTime, !mentioned.contains(time) { errand.fixedTime = nil }
+                return errand
+            }
             return errands.isEmpty ? HeuristicErrandParser.parse(text) : errands
         } catch {
             return HeuristicErrandParser.parse(text)

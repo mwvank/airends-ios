@@ -21,8 +21,7 @@ struct AddErrandView: View {
     @State private var addToMyPlaces = false
     @State private var nickname = ""
     @State private var durationMinutes = 15
-    @State private var hasFixedTime = false
-    @State private var fixedTime = Date.now
+    @State private var fixedTime: ClockTime?
     @State private var notes = ""
 
     var body: some View {
@@ -40,7 +39,7 @@ struct AddErrandView: View {
                             search: search,
                             addToMyPlaces: $addToMyPlaces,
                             nickname: $nickname,
-                            onChoose: { self.selectedPlace = $0 },
+                            onChoose: { choose($0) },
                             onSearch: { self.selectedPlace = nil }
                         )
                     } else {
@@ -64,13 +63,8 @@ struct AddErrandView: View {
                 }
 
                 Section("When") {
-                    Stepper(value: $durationMinutes, in: 5...240, step: 5) {
-                        LabeledContent("Time at location", value: "\(durationMinutes) min")
-                    }
-                    Toggle("Fixed time", isOn: $hasFixedTime)
-                    if hasFixedTime {
-                        DatePicker("Starts at", selection: $fixedTime, displayedComponents: .hourAndMinute)
-                    }
+                    DurationStepper(minutes: $durationMinutes)
+                    FixedTimeRow(time: $fixedTime)
                 }
 
                 Section("Notes") {
@@ -103,8 +97,9 @@ struct AddErrandView: View {
 
     private func choose(_ place: PlaceRef) {
         selectedPlace = place
-        lastQuery = placeQuery
+        if !placeQuery.isEmpty { lastQuery = placeQuery }
         placeQuery = ""
+        if fixedTime == nil { fixedTime = SavedPlace.fixedTime(for: place, in: context) }
         results = []
     }
 
@@ -114,7 +109,7 @@ struct AddErrandView: View {
             title: title.trimmingCharacters(in: .whitespaces),
             place: place,
             durationMinutes: durationMinutes,
-            fixedStart: hasFixedTime ? fixedTime : nil,
+            fixedStart: fixedTime?.date(on: .now),
             notes: notes
         )
         errand.sortIndex = nextSortIndex

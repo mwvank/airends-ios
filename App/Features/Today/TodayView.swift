@@ -269,7 +269,7 @@ private struct StopRow: View {
                 Text(PlaceLabel.shortened(errand.placeAddress)).font(.caption).foregroundStyle(.secondary)
             }
             if let timing {
-                Text("Leave \(timing.leaveBy.formatted(date: .omitted, time: .shortened)) · \(Int(timing.travelTime / 60)) min drive · \(errand.durationMinutes) min there")
+                Text("Leave \(timing.leaveBy.formatted(date: .omitted, time: .shortened)) · \(Int(timing.travelTime / 60)) min drive · \(DurationText.format(minutes: errand.durationMinutes)) there")
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }

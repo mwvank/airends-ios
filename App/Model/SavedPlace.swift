@@ -12,6 +12,8 @@ final class SavedPlace {
     var longitude: Double = 0
     var googlePlaceID: String?
     var address: String = ""
+    /// A time errands here always start, such as school pickup at 3:00, in minutes after midnight.
+    var fixedTimeMinutes: Int?
     var useCount: Int = 0
     var lastUsed: Date = Date.now
 
@@ -21,6 +23,17 @@ final class SavedPlace {
         self.longitude = place.longitude
         self.googlePlaceID = place.googlePlaceID
         self.address = place.address
+    }
+
+    /// A time errands here always start, such as school pickup at 3:00.
+    var fixedTime: ClockTime? {
+        get { fixedTimeMinutes.map(ClockTime.init(minutesSinceMidnight:)) }
+        set { fixedTimeMinutes = newValue?.minutesSinceMidnight }
+    }
+
+    /// The fixed time saved with `place` in My places, if any.
+    static func fixedTime(for place: PlaceRef, in context: ModelContext) -> ClockTime? {
+        existing(for: place, in: context)?.fixedTime
     }
 
     /// The nickname as editable text; empty clears it.
