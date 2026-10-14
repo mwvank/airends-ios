@@ -136,8 +136,13 @@ private struct ReviewCard: View {
 
         Button(action: onChoosePlace) {
             HStack {
-                Label(item.place?.name ?? "Choose a place", systemImage: item.fromSavedPlaces ? "star.fill" : "mappin.circle.fill")
-                    .foregroundStyle(item.place == nil ? .orange : .primary)
+                if let place = item.place {
+                    PlaceLabel(name: place.name, address: place.address,
+                               systemImage: item.fromSavedPlaces ? "star.fill" : "mappin.circle.fill")
+                } else {
+                    Label("Choose a place", systemImage: "mappin.circle.fill")
+                        .foregroundStyle(.orange)
+                }
                 Spacer()
                 Image(systemName: "chevron.right").font(.caption).foregroundStyle(.tertiary)
             }

@@ -33,7 +33,7 @@ struct AddErrandView: View {
                 Section("Where") {
                     if let selectedPlace {
                         HStack {
-                            Label(selectedPlace.name, systemImage: "mappin.circle.fill")
+                            PlaceLabel(name: selectedPlace.name, address: selectedPlace.address)
                             Spacer()
                             Button("Change") { self.selectedPlace = nil }
                         }
@@ -43,14 +43,16 @@ struct AddErrandView: View {
                         TextField("Search places, addresses or categories", text: $placeQuery)
                             .textInputAutocapitalization(.never)
                         ForEach(results, id: \.self) { place in
-                            Button(place.name) { choose(place) }
+                            Button { choose(place) } label: {
+                                PlaceLabel(name: place.name, address: place.address)
+                            }
                         }
                         if placeQuery.isEmpty && !savedPlaces.isEmpty {
                             ForEach(savedPlaces.prefix(5)) { saved in
                                 Button {
                                     choose(saved.place)
                                 } label: {
-                                    Label(saved.nickname ?? saved.name, systemImage: "star.fill")
+                                    PlaceLabel(name: saved.nickname ?? saved.name, address: saved.address, systemImage: "star.fill")
                                 }
                             }
                         }

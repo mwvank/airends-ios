@@ -259,6 +259,9 @@ private struct StopRow: View {
                 if errand.fixedStart != nil { Image(systemName: "clock.fill").font(.caption).foregroundStyle(.blue) }
             }
             Text(errand.placeName).font(.subheadline).foregroundStyle(.secondary)
+            if !errand.placeAddress.isEmpty {
+                Text(PlaceLabel.shortened(errand.placeAddress)).font(.caption).foregroundStyle(.secondary)
+            }
             if let timing {
                 Text("Leave \(timing.leaveBy.formatted(date: .omitted, time: .shortened)) · \(Int(timing.travelTime / 60)) min drive · \(errand.durationMinutes) min there")
                     .font(.caption)

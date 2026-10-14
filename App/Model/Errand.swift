@@ -10,6 +10,7 @@ final class Errand {
     var title: String = ""
     var notes: String = ""
     var placeName: String = ""
+    var placeAddress: String = ""
     var latitude: Double = 0
     var longitude: Double = 0
     var googlePlaceID: String?
@@ -27,6 +28,7 @@ final class Errand {
     init(title: String, place: PlaceRef, durationMinutes: Int, fixedStart: Date? = nil, notes: String = "", day: Date = .now) {
         self.title = title
         self.placeName = place.name
+        self.placeAddress = place.address
         self.latitude = place.latitude
         self.longitude = place.longitude
         self.googlePlaceID = place.googlePlaceID
@@ -37,7 +39,7 @@ final class Errand {
     }
 
     var place: PlaceRef {
-        PlaceRef(name: placeName, latitude: latitude, longitude: longitude, googlePlaceID: googlePlaceID)
+        PlaceRef(name: placeName, latitude: latitude, longitude: longitude, googlePlaceID: googlePlaceID, address: placeAddress)
     }
 
     var planStop: PlanStop {

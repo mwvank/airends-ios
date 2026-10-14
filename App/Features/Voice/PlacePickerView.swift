@@ -22,14 +22,16 @@ struct PlacePickerView: View {
                     Section("My places") {
                         ForEach(savedPlaces) { saved in
                             Button { pick(saved.place) } label: {
-                                Label(saved.nickname ?? saved.name, systemImage: "star.fill")
+                                PlaceLabel(name: saved.nickname ?? saved.name, address: saved.address, systemImage: "star.fill")
                             }
                         }
                     }
                 }
                 Section {
                     ForEach(results, id: \.self) { place in
-                        Button(place.name) { pick(place) }
+                        Button { pick(place) } label: {
+                            PlaceLabel(name: place.name, address: place.address)
+                        }
                     }
                 }
             }
@@ -53,5 +55,32 @@ struct PlacePickerView: View {
     private func pick(_ place: PlaceRef) {
         onPick(place)
         dismiss()
+    }
+}
+
+/// A place's name with its address underneath, used wherever places are listed.
+struct PlaceLabel: View {
+    let name: String
+    let address: String
+    var systemImage = "mappin.circle.fill"
+
+    var body: some View {
+        Label {
+            VStack(alignment: .leading, spacing: 2) {
+                Text(name).foregroundStyle(.primary)
+                if !address.isEmpty {
+                    Text(Self.shortened(address))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        } icon: {
+            Image(systemName: systemImage)
+        }
+    }
+
+    /// Drops the country from US addresses, which Google includes.
+    static func shortened(_ address: String) -> String {
+        address.hasSuffix(", USA") ? String(address.dropLast(5)) : address
     }
 }
