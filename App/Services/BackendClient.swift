@@ -59,23 +59,55 @@ struct BackendClient: Sendable {
     }
 
     /// Opening hours on `day` for each place, keyed by Google place ID.
-    /// A place with no entry is closed that day, or Google has no hours for it.
+    /// A place with an empty list is closed that day, or Google has no hours for it.
+    /// Each place's hours are fetched at most once a day per app launch, since
+    /// every lookup is a paid Google request.
     func openingHours(placeIDs: [String], on day: Date) async throws -> [String: [TimeRange]] {
         let components = Calendar.current.dateComponents([.year, .month, .day], from: day)
         let date = String(format: "%04d-%02d-%02d", components.year ?? 0, components.month ?? 0, components.day ?? 0)
-        var result: [String: [TimeRange]] = [:]
+        var result = await HoursCache.shared.lookup(placeIDs, date: date)
+        let missing = placeIDs.filter { result[$0] == nil }
         // The backend accepts up to 10 places per request.
-        for start in stride(from: 0, to: placeIDs.count, by: 10) {
-            let batch = Array(placeIDs[start..<min(start + 10, placeIDs.count)])
+        for start in stride(from: 0, to: missing.count, by: 10) {
+            let batch = Array(missing[start..<min(start + 10, missing.count)])
             let response: HoursResponse = try await post("hours", ["placeIds": batch, "date": date])
-            for (id, ranges) in response.hours {
-                result[id] = ranges.compactMap { range in
+            var fetched: [String: [TimeRange]] = [:]
+            for id in batch {
+                fetched[id] = (response.hours[id] ?? []).compactMap { range in
                     guard let open = Self.parseDate(range.open), let close = Self.parseDate(range.close) else { return nil }
                     return TimeRange(start: open, end: close)
                 }
             }
+            await HoursCache.shared.store(fetched, date: date)
+            result.merge(fetched) { _, new in new }
         }
         return result
+    }
+
+    /// The closing time shown on an errand card, such as "Closes 9:00 PM" or "Closed today".
+    /// Nil when it isn't known.
+    func closingText(placeID: String, on day: Date = .now) async -> String? {
+        guard let ranges = try? await openingHours(placeIDs: [placeID], on: day)[placeID] else { return nil }
+        guard let close = ranges.map(\.end).max() else { return "Closed today" }
+        if close.timeIntervalSince(Calendar.current.startOfDay(for: day)) >= 24 * 60 * 60 - 60 { return "Open 24 hours" }
+        return "Closes \(close.formatted(date: .omitted, time: .shortened))"
+    }
+
+    /// Opening hours already fetched this launch, so the errand card and the
+    /// Today plan share one lookup per place per day.
+    private actor HoursCache {
+        static let shared = HoursCache()
+        private var entries: [String: [TimeRange]] = [:]
+
+        func lookup(_ ids: [String], date: String) -> [String: [TimeRange]] {
+            var found: [String: [TimeRange]] = [:]
+            for id in ids { if let ranges = entries["\(id)|\(date)"] { found[id] = ranges } }
+            return found
+        }
+
+        func store(_ hours: [String: [TimeRange]], date: String) {
+            for (id, ranges) in hours { entries["\(id)|\(date)"] = ranges }
+        }
     }
 
     // MARK: Travel times
