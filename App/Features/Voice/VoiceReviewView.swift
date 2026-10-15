@@ -175,35 +175,64 @@ struct DurationStepper: View {
 }
 
 /// A time an errand must start, such as school pickup at 3:00. Errands that can
-/// happen any time show only a "Set time" button, which adds one.
+/// happen any time show only a "Set time" button, which opens a small time window
+/// with OK and Cancel. Tapping a set time opens the same window to change it.
 struct FixedTimeRow: View {
     @Binding var time: ClockTime?
 
+    @State private var choosing = false
+    @State private var draft = Date.now
+
     var body: some View {
-        if let current = time {
-            HStack {
-                Label("Fixed time:", systemImage: "clock")
-                Spacer()
-                DatePicker(
-                    "Fixed time",
-                    selection: Binding(get: { current.date(on: .now) ?? .now }, set: { time = ClockTime($0) }),
-                    displayedComponents: .hourAndMinute
-                )
-                .labelsHidden()
-                Button {
-                    withAnimation { time = nil }
-                } label: {
-                    Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+        Group {
+            if let current = time {
+                HStack {
+                    Label("Fixed time:", systemImage: "clock")
+                    Spacer()
+                    Button(current.date(on: .now)?.formatted(date: .omitted, time: .shortened) ?? "") {
+                        open(at: current)
+                    }
+                    .buttonStyle(.bordered)
+                    Button {
+                        withAnimation { time = nil }
+                    } label: {
+                        Image(systemName: "xmark.circle.fill").foregroundStyle(.secondary)
+                    }
+                    .buttonStyle(.borderless)
+                    .accessibilityLabel("Remove fixed time")
                 }
-                .buttonStyle(.borderless)
-                .accessibilityLabel("Remove fixed time")
+            } else {
+                Button("Set time") { open(at: Self.nextHour()) }
+                    .buttonStyle(.borderless)
             }
-        } else {
-            Button("Set time") {
-                withAnimation { time = Self.nextHour() }
-            }
-            .buttonStyle(.borderless)
         }
+        .sheet(isPresented: $choosing) {
+            NavigationStack {
+                DatePicker("Fixed time", selection: $draft, displayedComponents: .hourAndMinute)
+                    .datePickerStyle(.wheel)
+                    .labelsHidden()
+                    .frame(maxWidth: .infinity)
+                    .navigationTitle("Fixed time")
+                    .navigationBarTitleDisplayMode(.inline)
+                    .toolbar {
+                        ToolbarItem(placement: .cancellationAction) {
+                            Button("Cancel") { choosing = false }
+                        }
+                        ToolbarItem(placement: .confirmationAction) {
+                            Button("OK") {
+                                withAnimation { time = ClockTime(draft) }
+                                choosing = false
+                            }
+                        }
+                    }
+            }
+            .presentationDetents([.height(320)])
+        }
+    }
+
+    private func open(at start: ClockTime) {
+        draft = start.date(on: .now) ?? .now
+        choosing = true
     }
 
     /// The next whole hour, a sensible starting point for the picker.
