@@ -174,16 +174,16 @@ struct DurationStepper: View {
     }
 }
 
-/// A time an errand must start, such as school pickup at 3:00. Empty for errands
-/// that can happen any time; tapping "Set time" adds one.
+/// A time an errand must start, such as school pickup at 3:00. Errands that can
+/// happen any time show only a "Set time" button, which adds one.
 struct FixedTimeRow: View {
     @Binding var time: ClockTime?
 
     var body: some View {
-        HStack {
-            Label("Fixed time:", systemImage: "clock")
-            Spacer()
-            if let current = time {
+        if let current = time {
+            HStack {
+                Label("Fixed time:", systemImage: "clock")
+                Spacer()
                 DatePicker(
                     "Fixed time",
                     selection: Binding(get: { current.date(on: .now) ?? .now }, set: { time = ClockTime($0) }),
@@ -197,12 +197,12 @@ struct FixedTimeRow: View {
                 }
                 .buttonStyle(.borderless)
                 .accessibilityLabel("Remove fixed time")
-            } else {
-                Button("Set time") {
-                    withAnimation { time = Self.nextHour() }
-                }
-                .buttonStyle(.borderless)
             }
+        } else {
+            Button("Set time") {
+                withAnimation { time = Self.nextHour() }
+            }
+            .buttonStyle(.borderless)
         }
     }
 
