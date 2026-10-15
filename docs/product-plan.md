@@ -188,6 +188,7 @@ Built to a professional standard from the start, so the app can grow to a large 
 - **12 Oct 2026:** Planning data (travel times, stop order, opening hours, place search) comes from **Google**. Users choose Google Maps or Apple Maps when starting a route, with Google recommended and a "Don't ask again" option. Built to a professional security and scalability standard. Sold to **consumers on the App Store** (not licensed to businesses), with a possible acquisition as the long-term goal.
 
 - **12 Oct 2026:** The app is named **Errandeer** (no App Store app with that name was found). "Apple Errands" was ruled out because Apple doesn't allow "Apple" in app names.
+- **15 Oct 2026:** **Keep paid API usage low in every feature.** Before adding anything that calls Google, check what it costs and prefer the cheapest way: look things up only for places the user has chosen (never every search result), keep search requests to the basic fields, and cache results so the same lookup isn't paid for twice.
 
 ## Backlog: tweaks noted during testing
 

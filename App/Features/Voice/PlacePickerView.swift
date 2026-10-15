@@ -63,6 +63,8 @@ struct PlaceLabel: View {
     let name: String
     let address: String
     var systemImage = "mappin.circle.fill"
+    /// An extra line, such as "Closes 9:00 PM".
+    var detail: String? = nil
 
     var body: some View {
         Label {
@@ -72,6 +74,11 @@ struct PlaceLabel: View {
                     Text(Self.shortened(address))
                         .font(.caption)
                         .foregroundStyle(.secondary)
+                }
+                if let detail {
+                    Text(detail)
+                        .font(.caption)
+                        .foregroundStyle(detail == "Closed today" ? .red : .secondary)
                 }
             }
         } icon: {
@@ -107,6 +114,7 @@ struct ErrandPlaceRow: View {
     @State private var showingStarOptions = false
     @State private var results: [PlaceRef] = []
     @State private var isSearching = false
+    @State private var closing: String?
 
     private var saved: SavedPlace? {
         place.flatMap { SavedPlace.existing(for: $0, in: context) }
@@ -119,7 +127,7 @@ struct ErrandPlaceRow: View {
             } label: {
                 HStack {
                     if let place {
-                        PlaceLabel(name: place.name, address: place.address)
+                        PlaceLabel(name: place.name, address: place.address, detail: closing)
                     } else {
                         Label("Choose a place", systemImage: "mappin.circle.fill")
                             .foregroundStyle(.orange)
@@ -134,6 +142,13 @@ struct ErrandPlaceRow: View {
             }
             .buttonStyle(.plain)
             .accessibilityHint("Shows other places to choose from")
+            // Only the chosen place's hours are looked up (one paid request per place
+            // per day, shared with the Today plan), never every search result.
+            .task(id: place?.googlePlaceID) {
+                closing = nil
+                guard let id = place?.googlePlaceID, let backend = BackendClient.shared else { return }
+                closing = await backend.closingText(placeID: id)
+            }
 
             if place != nil {
                 starButton
