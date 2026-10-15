@@ -1,7 +1,7 @@
 // The app's backend: a single HTTPS endpoint that proxies the few Google Maps
 // Platform calls the app needs, so the paid API key never ships in the app.
 //
-//   POST /places       { query, latitude?, longitude? }        -> { places }
+//   POST /places       { query, latitude?, longitude?, date? }  -> { places }  (with date: each place's hours that day)
 //   POST /hours        { placeIds, date: "YYYY-MM-DD" }        -> { hours: { [placeId]: [{ open, close }] } }
 //   POST /travelTimes  { points: [{ latitude, longitude }], departureTime? } -> { seconds: number|null[][] }
 
@@ -42,7 +42,19 @@ async function handlePlaces(body: Record<string, unknown>, key: string) {
   const query = typeof body.query === "string" ? body.query.trim() : "";
   if (query.length === 0 || query.length > 200) throw new BadRequest("query must be 1-200 characters");
   const near = { latitude: body.latitude, longitude: body.longitude };
-  return { places: await searchPlaces(key, query, isLatLng(near) ? near : undefined) };
+  const date = typeof body.date === "string" ? parseDate(body.date) : null;
+  if (body.date !== undefined && !date) throw new BadRequest("date must be YYYY-MM-DD");
+
+  const found = await searchPlaces(key, query, isLatLng(near) ? near : undefined, date !== null);
+  const places = found.map(({ openingHours, ...place }) => {
+    if (!date || !openingHours) return place;
+    const hours = rangesForDay(
+      openingHours.currentOpeningHours ?? openingHours.regularOpeningHours, date, openingHours.utcOffsetMinutes ?? 0);
+    // Saves a separate paid hours lookup if the user then picks this place.
+    hoursCache.set(`${place.id}:${body.date}`, hours);
+    return { ...place, hours };
+  });
+  return { places };
 }
 
 async function handleHours(body: Record<string, unknown>, key: string) {

@@ -32,17 +32,29 @@ struct BackendClient: Sendable {
             let address: String
             let latitude: Double
             let longitude: Double
+            /// Only present when the search asked for hours.
+            let hours: [Range]?
         }
         let places: [Place]
     }
 
-    func searchPlaces(_ query: String, near: (latitude: Double, longitude: Double)?) async throws -> [PlaceRef] {
+    /// Searches for places. With `hoursOn`, Google also returns each place's hours
+    /// that day, which costs more per search, so only the short "other places" list uses it.
+    func searchPlaces(_ query: String, near: (latitude: Double, longitude: Double)?, hoursOn day: Date? = nil) async throws -> [PlaceRef] {
         var body: [String: Any] = ["query": query]
         if let near {
             body["latitude"] = near.latitude
             body["longitude"] = near.longitude
         }
+        if let day { body["date"] = Self.dateString(day) }
         let response: PlacesResponse = try await post("places", body)
+        if let day {
+            var hours: [String: [TimeRange]] = [:]
+            for place in response.places {
+                if let ranges = place.hours { hours[place.id] = Self.timeRanges(ranges) }
+            }
+            await HoursCache.shared.store(hours, date: Self.dateString(day))
+        }
         return response.places.map {
             PlaceRef(name: $0.name, latitude: $0.latitude, longitude: $0.longitude, googlePlaceID: $0.id, address: $0.address)
         }
@@ -50,12 +62,25 @@ struct BackendClient: Sendable {
 
     // MARK: Opening hours
 
+    private struct Range: Decodable {
+        let open: String
+        let close: String
+    }
+
     private struct HoursResponse: Decodable {
-        struct Range: Decodable {
-            let open: String
-            let close: String
-        }
         let hours: [String: [Range]]
+    }
+
+    private static func dateString(_ day: Date) -> String {
+        let components = Calendar.current.dateComponents([.year, .month, .day], from: day)
+        return String(format: "%04d-%02d-%02d", components.year ?? 0, components.month ?? 0, components.day ?? 0)
+    }
+
+    private static func timeRanges(_ ranges: [Range]) -> [TimeRange] {
+        ranges.compactMap { range in
+            guard let open = parseDate(range.open), let close = parseDate(range.close) else { return nil }
+            return TimeRange(start: open, end: close)
+        }
     }
 
     /// Opening hours on `day` for each place, keyed by Google place ID.
@@ -63,8 +88,7 @@ struct BackendClient: Sendable {
     /// Each place's hours are fetched at most once a day per app launch, since
     /// every lookup is a paid Google request.
     func openingHours(placeIDs: [String], on day: Date) async throws -> [String: [TimeRange]] {
-        let components = Calendar.current.dateComponents([.year, .month, .day], from: day)
-        let date = String(format: "%04d-%02d-%02d", components.year ?? 0, components.month ?? 0, components.day ?? 0)
+        let date = Self.dateString(day)
         var result = await HoursCache.shared.lookup(placeIDs, date: date)
         let missing = placeIDs.filter { result[$0] == nil }
         // The backend accepts up to 10 places per request.
@@ -73,10 +97,7 @@ struct BackendClient: Sendable {
             let response: HoursResponse = try await post("hours", ["placeIds": batch, "date": date])
             var fetched: [String: [TimeRange]] = [:]
             for id in batch {
-                fetched[id] = (response.hours[id] ?? []).compactMap { range in
-                    guard let open = Self.parseDate(range.open), let close = Self.parseDate(range.close) else { return nil }
-                    return TimeRange(start: open, end: close)
-                }
+                fetched[id] = Self.timeRanges(response.hours[id] ?? [])
             }
             await HoursCache.shared.store(fetched, date: date)
             result.merge(fetched) { _, new in new }
@@ -86,8 +107,15 @@ struct BackendClient: Sendable {
 
     /// The closing time shown on an errand card, such as "Closes 9:00 PM" or "Closed today".
     /// Nil when it isn't known.
-    func closingText(placeID: String, on day: Date = .now) async -> String? {
-        guard let ranges = try? await openingHours(placeIDs: [placeID], on: day)[placeID] else { return nil }
+    /// With `lookUpIfMissing` false, only hours already fetched are used, so it never costs a request.
+    func closingText(placeID: String, on day: Date = .now, lookUpIfMissing: Bool = true) async -> String? {
+        let ranges: [TimeRange]?
+        if lookUpIfMissing {
+            ranges = try? await openingHours(placeIDs: [placeID], on: day)[placeID]
+        } else {
+            ranges = await HoursCache.shared.lookup([placeID], date: Self.dateString(day))[placeID]
+        }
+        guard let ranges else { return nil }
         guard let close = ranges.map(\.end).max() else { return "Closed today" }
         if close.timeIntervalSince(Calendar.current.startOfDay(for: day)) >= 24 * 60 * 60 - 60 { return "Open 24 hours" }
         return "Closes \(close.formatted(date: .omitted, time: .shortened))"

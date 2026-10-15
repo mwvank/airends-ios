@@ -115,6 +115,8 @@ struct ErrandPlaceRow: View {
     @State private var results: [PlaceRef] = []
     @State private var isSearching = false
     @State private var closing: String?
+    /// Closing times for the dropdown's places, keyed by Google place ID.
+    @State private var resultClosing: [String: String] = [:]
 
     private var saved: SavedPlace? {
         place.flatMap { SavedPlace.existing(for: $0, in: context) }
@@ -202,7 +204,8 @@ struct ErrandPlaceRow: View {
             choiceButton(saved.place, name: saved.nickname ?? saved.name, systemImage: "star.fill")
         }
         ForEach(results.filter { $0 != place }.prefix(4), id: \.self) { result in
-            choiceButton(result, name: result.name, systemImage: "mappin.circle")
+            choiceButton(result, name: result.name, systemImage: "mappin.circle",
+                         detail: result.googlePlaceID.flatMap { resultClosing[$0] })
         }
         if isSearching {
             ProgressView().frame(maxWidth: .infinity)
@@ -218,12 +221,22 @@ struct ErrandPlaceRow: View {
             let text = query.trimmingCharacters(in: .whitespaces)
             guard results.isEmpty, !text.isEmpty else { return }
             isSearching = true
-            results = (try? await search.search(text, near: location.current?.coordinate)) ?? []
+            let near = location.current?.coordinate
+            if let backend = BackendClient.shared {
+                // One search that also returns hours, instead of a paid hours lookup per place.
+                results = (try? await backend.searchPlaces(text, near: near.map { ($0.latitude, $0.longitude) }, hoursOn: .now)) ?? []
+                for result in results {
+                    guard let id = result.googlePlaceID else { continue }
+                    resultClosing[id] = await backend.closingText(placeID: id, lookUpIfMissing: false)
+                }
+            } else {
+                results = (try? await search.search(text, near: near)) ?? []
+            }
             isSearching = false
         }
     }
 
-    private func choiceButton(_ choice: PlaceRef, name: String, systemImage: String) -> some View {
+    private func choiceButton(_ choice: PlaceRef, name: String, systemImage: String, detail: String? = nil) -> some View {
         Button {
             withAnimation {
                 showingChoices = false
@@ -232,7 +245,7 @@ struct ErrandPlaceRow: View {
             }
             onChoose(choice)
         } label: {
-            PlaceLabel(name: name, address: choice.address, systemImage: systemImage)
+            PlaceLabel(name: name, address: choice.address, systemImage: systemImage, detail: detail)
         }
         .padding(.leading, 32)
     }

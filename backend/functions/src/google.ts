@@ -14,6 +14,8 @@ export interface FoundPlace {
   address: string;
   latitude: number;
   longitude: number;
+  /** Only present when the search asked for opening hours. */
+  openingHours?: PlaceHours;
 }
 
 export class GoogleError extends Error {
@@ -40,20 +42,26 @@ async function call<T>(url: string, apiKey: string, fieldMask: string, body?: un
   return (await response.json()) as T;
 }
 
-/** Text search for places by name, address or category, biased to the user's area. */
-export async function searchPlaces(apiKey: string, query: string, near?: LatLng): Promise<FoundPlace[]> {
+/**
+ * Text search for places by name, address or category, biased to the user's area.
+ * Asking for opening hours makes the request a pricier Google tier, so only the
+ * app's short "other places" list does that; typing in the search box doesn't.
+ */
+export async function searchPlaces(apiKey: string, query: string, near?: LatLng, withHours = false): Promise<FoundPlace[]> {
   interface Response {
-    places?: {
+    places?: ({
       id: string;
       displayName?: { text: string };
       formattedAddress?: string;
       location?: LatLng;
-    }[];
+    } & PlaceHours)[];
   }
+  const fields = ["places.id", "places.displayName", "places.formattedAddress", "places.location"];
+  if (withHours) fields.push("places.currentOpeningHours", "places.regularOpeningHours", "places.utcOffsetMinutes");
   const result = await call<Response>(
     "https://places.googleapis.com/v1/places:searchText",
     apiKey,
-    "places.id,places.displayName,places.formattedAddress,places.location",
+    fields.join(","),
     {
       textQuery: query,
       pageSize: 10,
@@ -68,6 +76,13 @@ export async function searchPlaces(apiKey: string, query: string, near?: LatLng)
       address: p.formattedAddress ?? "",
       latitude: p.location!.latitude,
       longitude: p.location!.longitude,
+      ...(withHours && {
+        openingHours: {
+          currentOpeningHours: p.currentOpeningHours,
+          regularOpeningHours: p.regularOpeningHours,
+          utcOffsetMinutes: p.utcOffsetMinutes,
+        },
+      }),
     }));
 }
 
